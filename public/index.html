@@ -693,11 +693,15 @@
   <div class="page-header">
     <div class="section-tag">// USER ACCESS</div>
     <h2>Login / Signup</h2>
-    <p>Create an account or sign in with your MongoDB Atlas credentials.</p>
+    <p>Create an account or sign in to unlock the visualizer, compare engine, profile tools, and admin analytics.</p>
   </div>
 
   <div class="auth-layout">
     <div class="auth-card glass-panel">
+      <div class="auth-preface">
+        <div class="auth-preface-label">Secure Access</div>
+        <p>Atlas-backed accounts, hashed passwords, and personalized progress tracking.</p>
+      </div>
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-tab="login">Login</button>
         <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
@@ -743,6 +747,20 @@
     <div class="auth-info glass-panel">
       <h3>How it works</h3>
       <p>Your login is stored in MongoDB Atlas (free tier). Passwords are hashed before saving.</p>
+      <div class="auth-security-list">
+        <div class="security-item">
+          <span class="security-kicker">Atlas</span>
+          <strong>Cloud-backed storage</strong>
+        </div>
+        <div class="security-item">
+          <span class="security-kicker">Hashing</span>
+          <strong>Passwords are never stored in plain text</strong>
+        </div>
+        <div class="security-item">
+          <span class="security-kicker">Profile</span>
+          <strong>Display name, history, and dashboards stay personal</strong>
+        </div>
+      </div>
       <div class="auth-note">Tip: Set <span class="mono">JWT_SECRET</span> in .env when deploying.</div>
     </div>
   </div>
