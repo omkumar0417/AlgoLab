@@ -19,7 +19,7 @@ const State = {
   vizAnimFrame: null,
   vizTimer: null,
   sortArray: [],
-  history: JSON.parse(localStorage.getItem('algolab_history') || '[]'),
+  history: [],
   charts: {},
   auth: {
     token: localStorage.getItem('algolab_token') || '',
@@ -55,6 +55,19 @@ function handleFailureParam(param) {
     catSelect.value = 'failure';
     setTimeout(() => document.getElementById('btnRunCompare').click(), 300);
   }
+}
+
+function requireLogin(message = 'Please login first') {
+  if (State.auth.token) return true;
+  showToast(message, 'error');
+  navigateTo('auth');
+  return false;
+}
+
+function getAuthHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  if (State.auth.token) headers.Authorization = `Bearer ${State.auth.token}`;
+  return headers;
 }
 
 // ============================================================
@@ -1452,17 +1465,39 @@ function initBigOChart() {
 // ============================================================
 // HISTORY
 // ============================================================
-function addToHistory(entry) {
-  State.history.unshift({...entry, id: Date.now()});
-  if(State.history.length > 100) State.history.pop();
-  localStorage.setItem('algolab_history', JSON.stringify(State.history));
-  showToast('Saved to history ✓', 'success');
+async function addToHistory(entry) {
+  if (!State.auth.token) {
+    showToast('Login to save your history', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/history', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(entry),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.saved) throw new Error(data.message || 'Could not save history');
+
+    State.history.unshift(data.entry);
+    if (State.history.length > 100) State.history.pop();
+    renderHistory();
+    showToast('Saved to your account history', 'success');
+  } catch (err) {
+    showToast(err.message || 'Could not save history', 'error');
+  }
 }
 
 function renderHistory() {
   const list = document.getElementById('historyList');
   const search = document.getElementById('historySearch').value.toLowerCase();
   const filter = document.getElementById('historyFilter').value;
+
+  if (!State.auth.token) {
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">🔐</div><p>Login to see your personal algorithm history.</p></div>`;
+    return;
+  }
 
   let items = State.history;
   if(search) items = items.filter(i => (i.algo+i.input+i.result).toLowerCase().includes(search));
@@ -1477,7 +1512,7 @@ function renderHistory() {
     <div class="history-item">
       <div class="hi-header">
         <div class="hi-title">${item.algo}</div>
-        <div class="hi-time">${new Date(item.time).toLocaleTimeString()}</div>
+        <div class="hi-time">${new Date(item.createdAt || item.time).toLocaleTimeString()}</div>
       </div>
       <div class="hi-meta">
         <span class="hi-tag">${item.category}</span>
@@ -1489,15 +1524,15 @@ function renderHistory() {
         Steps: ${(item.steps||0).toLocaleString()}
       </div>
       <div class="hi-actions">
-        <button class="hi-btn" onclick="rerunHistory('${item.id}')">▶ Re-run</button>
-        <button class="hi-btn" onclick="deleteHistory('${item.id}')">🗑 Delete</button>
+        <button class="hi-btn" onclick="rerunHistory('${item._id || item.id}')">▶ Re-run</button>
+        <button class="hi-btn" onclick="deleteHistory('${item._id || item.id}')">🗑 Delete</button>
       </div>
     </div>
   `).join('');
 }
 
 function rerunHistory(id) {
-  const item = State.history.find(h => h.id === +id);
+  const item = State.history.find(h => String(h._id || h.id) === String(id));
   if(!item) return;
   showToast(`Re-running ${item.algo}...`);
   if(item.comparison) {
@@ -1525,23 +1560,48 @@ function rerunHistory(id) {
   }
 }
 
-function deleteHistory(id) {
-  State.history = State.history.filter(h => h.id !== +id);
-  localStorage.setItem('algolab_history', JSON.stringify(State.history));
-  renderHistory();
+async function deleteHistory(id) {
+  if (!requireLogin('Login to manage history')) return;
+
+  try {
+    const res = await fetch(`/api/history/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.deleted) throw new Error(data.message || 'Could not delete history');
+
+    State.history = State.history.filter(h => String(h._id || h.id) !== String(id));
+    renderHistory();
+    showToast('History item deleted', 'success');
+  } catch (err) {
+    showToast(err.message || 'Could not delete history', 'error');
+  }
 }
 
 function initHistory() {
   document.getElementById('historySearch').addEventListener('input', renderHistory);
   document.getElementById('historyFilter').addEventListener('change', renderHistory);
-  document.getElementById('btnClearHistory').addEventListener('click', () => {
+  document.getElementById('btnClearHistory').addEventListener('click', async () => {
+    if (!requireLogin('Login to clear history')) return;
     if(confirm('Clear all history?')) {
-      State.history = [];
-      localStorage.removeItem('algolab_history');
-      renderHistory();
+      try {
+        const res = await fetch('/api/history', {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.deleted) throw new Error(data.message || 'Could not clear history');
+        State.history = [];
+        renderHistory();
+        showToast('All history cleared', 'success');
+      } catch (err) {
+        showToast(err.message || 'Could not clear history', 'error');
+      }
     }
   });
   document.getElementById('btnExportHistory').addEventListener('click', () => {
+    if (!requireLogin('Login to export history')) return;
     const json = JSON.stringify(State.history, null, 2);
     const blob = new Blob([json], {type:'application/json'});
     const a = document.createElement('a');
@@ -1561,14 +1621,17 @@ function setAuth(token, userId) {
   localStorage.setItem('algolab_token', State.auth.token);
   localStorage.setItem('algolab_user', State.auth.userId);
   updateAuthUI();
+  apiHistory();
 }
 
 function clearAuth() {
   State.auth.token = '';
   State.auth.userId = '';
+  State.history = [];
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
   updateAuthUI();
+  renderHistory();
 }
 
 function updateAuthUI() {
@@ -1614,6 +1677,7 @@ function initAuth() {
         if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
         setAuth(data.token, data.userId);
         showToast('Login successful!', 'success');
+        navigateTo('history');
       } catch (err) {
         showToast(err.message || 'Login failed', 'error');
       }
@@ -1706,12 +1770,25 @@ async function apiRun(payload) {
 }
 
 async function apiHistory() {
+  if (!State.auth.token) {
+    State.history = [];
+    renderHistory();
+    return;
+  }
+
   try {
-    const res = await fetch('/api/history');
+    const res = await fetch('/api/history', {
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401) {
+      clearAuth();
+      showToast('Session expired. Please login again.', 'error');
+      return;
+    }
     if(res.ok) {
       const data = await res.json();
       if(data.history) {
-        State.history = [...data.history, ...State.history];
+        State.history = data.history;
         renderHistory();
       }
     }
