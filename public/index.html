@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoLab — Algorithm Strategy Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-logo">
+    <span class="logo-bracket">[</span>
+    <span class="logo-text">AlgoLab</span>
+    <span class="logo-bracket">]</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+    <li><a href="#" class="nav-link" data-page="visualize">Visualize</a></li>
+    <li><a href="#" class="nav-link" data-page="compare">Compare</a></li>
+    <li><a href="#" class="nav-link" data-page="suggest">Suggest</a></li>
+    <li><a href="#" class="nav-link" data-page="history">History</a></li>
+  </ul>
+  <div class="nav-status">
+    <span class="status-dot"></span>
+    <span class="status-text">LIVE</span>
+  </div>
+  <button class="hamburger" id="hamburger">☰</button>
+</nav>
+
+<!-- ===== PAGE: HOME ===== -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <canvas id="heroCanvas"></canvas>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">DAA Strategy Lab · v2.0</div>
+      <h1 class="hero-title">
+        <span class="title-line">Decode</span>
+        <span class="title-line accent">Algorithms.</span>
+        <span class="title-line">Master</span>
+        <span class="title-line accent">Complexity.</span>
+      </h1>
+      <p class="hero-sub">Visualize, compare, and understand every algorithm paradigm — from Greedy to Branch & Bound — with animated step-by-step breakdowns and real complexity analysis.</p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="navigateTo('visualize')">Start Visualizing →</button>
+        <button class="btn-ghost" onclick="navigateTo('compare')">Compare Algorithms</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">12+</span><span class="stat-label">Algorithms</span></div>
+        <div class="stat"><span class="stat-num">6</span><span class="stat-label">Paradigms</span></div>
+        <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Insight</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="algo-card-stack">
+        <div class="algo-card card-1">
+          <div class="card-icon">⚡</div>
+          <div class="card-name">Dijkstra</div>
+          <div class="card-tag">Greedy</div>
+          <div class="card-complexity">O((V+E) log V)</div>
+        </div>
+        <div class="algo-card card-2">
+          <div class="card-icon">🔀</div>
+          <div class="card-name">Merge Sort</div>
+          <div class="card-tag">Divide & Conquer</div>
+          <div class="card-complexity">O(n log n)</div>
+        </div>
+        <div class="algo-card card-3">
+          <div class="card-icon">📦</div>
+          <div class="card-name">0/1 Knapsack</div>
+          <div class="card-tag">Dynamic Programming</div>
+          <div class="card-complexity">O(nW)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARADIGM GRID -->
+  <section class="paradigms-section">
+    <div class="section-header">
+      <div class="section-tag">// PARADIGMS</div>
+      <h2>Every Strategy, Explained</h2>
+      <p>Six core algorithm paradigms with real-world problems and animated visualizations.</p>
+    </div>
+    <div class="paradigm-grid">
+      <div class="paradigm-card" onclick="navigateTo('visualize','greedy')">
+        <div class="para-glyph">G</div>
+        <h3>Greedy</h3>
+        <p>Make locally optimal choices. Fast but not always correct. Explore where it fails.</p>
+        <div class="para-algos">Dijkstra · Fractional Knapsack · Prim's</div>
+        <div class="para-arrow">→</div>
+      </div>
+      <div class="paradigm-card" onclick="navigateTo('visualize','dp')">
+        <div class="para-glyph">D</div>
+        <h3>Dynamic Programming</h3>
+        <p>Optimal substructure + overlapping subproblems. Guaranteed optimal solutions.</p>
+        <div class="para-algos">0/1 Knapsack · LCS · Floyd-Warshall</div>
+        <div class="para-arrow">→</div>
+      </div>
+      <div class="paradigm-card" onclick="navigateTo('visualize','dc')">
+        <div class="para-glyph">÷</div>
+        <h3>Divide & Conquer</h3>
+        <p>Split, solve recursively, combine. Elegant and efficient for large inputs.</p>
+        <div class="para-algos">Merge Sort · Quick Sort · Binary Search</div>
+        <div class="para-arrow">→</div>
+      </div>
+      <div class="paradigm-card" onclick="navigateTo('visualize','backtrack')">
+        <div class="para-glyph">↩</div>
+        <h3>Backtracking</h3>
+        <p>Explore all possibilities with intelligent pruning. Exhaustive but smart.</p>
+        <div class="para-algos">N-Queens · Knapsack BT · Sudoku</div>
+        <div class="para-arrow">→</div>
+      </div>
+      <div class="paradigm-card" onclick="navigateTo('visualize','bb')">
+        <div class="para-glyph">✂</div>
+        <h3>Branch & Bound</h3>
+        <p>Systematic enumeration with bounding. Optimal for NP-hard problems.</p>
+        <div class="para-algos">TSP · Job Scheduling · 0/1 Knapsack</div>
+        <div class="para-arrow">→</div>
+      </div>
+      <div class="paradigm-card" onclick="navigateTo('visualize','graph')">
+        <div class="para-glyph">⬡</div>
+        <h3>Graph Algorithms</h3>
+        <p>Traverse, search, find paths. The backbone of network algorithms.</p>
+        <div class="para-algos">BFS · DFS · Dijkstra · Floyd-Warshall</div>
+        <div class="para-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAILURE SHOWCASE TEASER -->
+  <section class="failure-teaser">
+    <div class="section-header">
+      <div class="section-tag failure-tag">// FAILURE CASES</div>
+      <h2>When Algorithms Break</h2>
+      <p>The most important lesson — understanding <em>where</em> and <em>why</em> algorithms fail.</p>
+    </div>
+    <div class="failure-cards">
+      <div class="failure-card" onclick="navigateTo('compare','failure-greedy')">
+        <div class="fail-header">
+          <span class="fail-icon">⚠️</span>
+          <span class="fail-title">Greedy Knapsack Fails</span>
+        </div>
+        <p>Greedy picks highest value-density items. But for 0/1 knapsack, it gives a suboptimal result. See the exact counterexample.</p>
+        <div class="fail-cta">View Failure Case →</div>
+      </div>
+      <div class="failure-card" onclick="navigateTo('compare','failure-quicksort')">
+        <div class="fail-header">
+          <span class="fail-icon">💥</span>
+          <span class="fail-title">QuickSort Worst Case</span>
+        </div>
+        <p>On already-sorted arrays, naïve QuickSort degrades to O(n²). Watch it happen in real time with step counter.</p>
+        <div class="fail-cta">Watch It Degrade →</div>
+      </div>
+      <div class="failure-card" onclick="navigateTo('compare','failure-backtrack')">
+        <div class="fail-header">
+          <span class="fail-icon">🔥</span>
+          <span class="fail-title">Backtracking Explosion</span>
+        </div>
+        <p>N-Queens with n=12 explodes. See how step count grows exponentially without pruning.</p>
+        <div class="fail-cta">See Explosion →</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== PAGE: VISUALIZE ===== -->
+<div class="page" id="page-visualize">
+  <div class="page-header">
+    <div class="section-tag">// STEP-BY-STEP VISUALIZER</div>
+    <h2>Algorithm Visualizer</h2>
+    <p>Watch algorithms execute in real time with animated, color-coded steps.</p>
+  </div>
+
+  <div class="viz-layout">
+    <!-- Controls -->
+    <div class="viz-controls glass-panel">
+      <div class="control-group">
+        <label>Algorithm</label>
+        <select id="vizAlgo" class="glass-select">
+          <optgroup label="Sorting">
+            <option value="quicksort">Quick Sort</option>
+            <option value="mergesort">Merge Sort</option>
+          </optgroup>
+          <optgroup label="Graph">
+            <option value="bfs">BFS Traversal</option>
+            <option value="dijkstra">Dijkstra's SSSP</option>
+            <option value="floyd">Floyd-Warshall</option>
+          </optgroup>
+          <optgroup label="Knapsack">
+            <option value="knapsack_dp">Knapsack (DP)</option>
+            <option value="knapsack_greedy">Knapsack (Greedy)</option>
+          </optgroup>
+          <optgroup label="Classic">
+            <option value="nqueens">N-Queens</option>
+            <option value="tsp">TSP (Branch & Bound)</option>
+            <option value="rabinkarp">Rabin-Karp</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="control-group" id="inputSizeGroup">
+        <label>Array Size / N</label>
+        <input type="range" id="inputSize" min="5" max="50" value="20" class="glass-slider" />
+        <span id="inputSizeVal">20</span>
+      </div>
+
+      <div class="control-group">
+        <label>Speed</label>
+        <input type="range" id="vizSpeed" min="1" max="10" value="5" class="glass-slider" />
+        <span id="vizSpeedVal">5x</span>
+      </div>
+
+      <div class="control-group" id="customInputGroup">
+        <label>Custom Input (comma-separated)</label>
+        <input type="text" id="customInput" class="glass-input" placeholder="e.g. 5,3,8,1,9,2" />
+      </div>
+
+      <div class="viz-btns">
+        <button class="btn-primary" id="btnStartViz">▶ Run</button>
+        <button class="btn-ghost" id="btnPauseViz">⏸ Pause</button>
+        <button class="btn-ghost" id="btnResetViz">↺ Reset</button>
+        <button class="btn-ghost" id="btnStepViz">⏭ Step</button>
+      </div>
+
+      <!-- Complexity info -->
+      <div class="complexity-box" id="vizComplexityBox">
+        <div class="complex-title">Complexity</div>
+        <div class="complex-row"><span>Best:</span><span id="cBest">—</span></div>
+        <div class="complex-row"><span>Average:</span><span id="cAvg">—</span></div>
+        <div class="complex-row"><span>Worst:</span><span id="cWorst">—</span></div>
+        <div class="complex-row"><span>Space:</span><span id="cSpace">—</span></div>
+      </div>
+    </div>
+
+    <!-- Visualization Area -->
+    <div class="viz-main">
+      <div class="viz-canvas-area" id="vizArea">
+        <!-- Sort bars -->
+        <div id="sortViz" class="sort-viz hidden">
+          <div class="sort-bars" id="sortBars"></div>
+        </div>
+        <!-- Graph viz -->
+        <canvas id="graphCanvas" class="graph-canvas hidden"></canvas>
+        <!-- DP Table viz -->
+        <div id="dpViz" class="dp-viz hidden">
+          <div id="dpTableWrap"></div>
+        </div>
+        <!-- NQueens viz -->
+        <div id="nqueensViz" class="nqueens-viz hidden">
+          <div id="queensBoard"></div>
+        </div>
+        <!-- Rabin Karp viz -->
+        <div id="rkViz" class="rk-viz hidden">
+          <div id="rkDisplay"></div>
+        </div>
+        <!-- Default placeholder -->
+        <div id="vizPlaceholder" class="viz-placeholder">
+          <div class="placeholder-icon">⚙️</div>
+          <p>Select an algorithm and press Run to begin visualization</p>
+        </div>
+      </div>
+
+      <!-- Step log -->
+      <div class="step-log glass-panel" id="stepLog">
+        <div class="log-header">
+          <span>// STEP LOG</span>
+          <span id="stepCount">Steps: 0</span>
+        </div>
+        <div class="log-entries" id="logEntries"></div>
+      </div>
+
+      <!-- Why Panel -->
+      <div class="why-panel glass-panel" id="whyPanel">
+        <div class="why-header">// WHY THIS ALGORITHM?</div>
+        <div id="whyContent">Select an algorithm to see its explanation.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: COMPARE ===== -->
+<div class="page" id="page-compare">
+  <div class="page-header">
+    <div class="section-tag">// COMPARISON ENGINE</div>
+    <h2>Algorithm Comparison Dashboard</h2>
+    <p>Run multiple algorithms on the same input. See who wins — and who fails.</p>
+  </div>
+
+  <div class="compare-layout">
+    <div class="compare-controls glass-panel">
+      <div class="control-group">
+        <label>Problem Category</label>
+        <select id="compareCategory" class="glass-select">
+          <option value="sorting">Sorting</option>
+          <option value="knapsack">Knapsack</option>
+          <option value="shortestpath">Shortest Path</option>
+          <option value="failure">Failure Cases</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Input Size</label>
+        <input type="range" id="compareSize" min="5" max="200" value="20" class="glass-slider" />
+        <span id="compareSizeVal">20</span>
+      </div>
+
+      <div class="control-group" id="knapsackInputGroup" style="display:none">
+        <label>Knapsack Capacity</label>
+        <input type="number" id="knapsackCapacity" value="50" class="glass-input" min="10" max="200" />
+      </div>
+
+      <button class="btn-primary" id="btnRunCompare" style="width:100%">⚡ Run Comparison</button>
+      <button class="btn-ghost" id="btnSaveHistory" style="width:100%;margin-top:0.5rem">💾 Save to History</button>
+    </div>
+
+    <div class="compare-results">
+      <!-- Results cards -->
+      <div class="compare-cards" id="compareCards">
+        <div class="empty-state">
+          <div class="es-icon">📊</div>
+          <p>Configure inputs and click Run Comparison</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="compare-charts">
+        <div class="chart-box glass-panel">
+          <div class="chart-title">// TIME COMPARISON (BAR)</div>
+          <canvas id="timeBarChart"></canvas>
+        </div>
+        <div class="chart-box glass-panel">
+          <div class="chart-title">// STEP COUNT COMPARISON</div>
+          <canvas id="stepsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Growth chart -->
+      <div class="chart-box glass-panel" id="growthChartBox" style="display:none">
+        <div class="chart-title">// INPUT SIZE vs TIME (GROWTH CURVE)</div>
+        <canvas id="growthChart"></canvas>
+      </div>
+
+      <!-- Failure showcase -->
+      <div id="failureShowcase" class="failure-showcase" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SUGGEST ===== -->
+<div class="page" id="page-suggest">
+  <div class="page-header">
+    <div class="section-tag">// AI SUGGESTION ENGINE</div>
+    <h2>Algorithm Suggestion Engine</h2>
+    <p>Describe your problem in plain English. Get the optimal algorithm with explanation.</p>
+  </div>
+
+  <div class="suggest-layout">
+    <div class="suggest-input-area glass-panel">
+      <label>Describe Your Problem</label>
+      <textarea id="suggestInput" class="glass-textarea" placeholder="e.g. 'find the shortest path in a weighted graph with no negative edges'&#10;'sort a million numbers as fast as possible'&#10;'pack items in a bag to maximize value'"></textarea>
+      <button class="btn-primary" id="btnSuggest" style="width:100%;margin-top:1rem">🔍 Suggest Algorithm</button>
+
+      <div class="suggest-examples">
+        <div class="eg-label">Try these:</div>
+        <div class="suggest-chips">
+          <span class="chip" onclick="fillSuggest('find shortest path in weighted graph')">shortest path weighted graph</span>
+          <span class="chip" onclick="fillSuggest('maximize value of items in a knapsack')">knapsack problem</span>
+          <span class="chip" onclick="fillSuggest('sort large array quickly')">sort large array</span>
+          <span class="chip" onclick="fillSuggest('match a pattern in a long text string')">pattern matching</span>
+          <span class="chip" onclick="fillSuggest('place N queens on chessboard without attacks')">N queens placement</span>
+          <span class="chip" onclick="fillSuggest('find minimum cost tour visiting all cities')">traveling salesman</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="suggest-results" id="suggestResults">
+      <div class="empty-state">
+        <div class="es-icon">🤖</div>
+        <p>Describe a problem to get algorithm suggestions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complexity Growth Visualizer -->
+  <div class="complexity-section glass-panel">
+    <div class="section-tag">// COMPLEXITY GROWTH ANALYZER</div>
+    <h3>Big-O Growth Comparison</h3>
+    <canvas id="bigOChart" style="max-height:300px"></canvas>
+  </div>
+</div>
+
+<!-- ===== PAGE: HISTORY ===== -->
+<div class="page" id="page-history">
+  <div class="page-header">
+    <div class="section-tag">// SESSION HISTORY</div>
+    <h2>Run History</h2>
+    <p>All your algorithm runs from this session. Re-run any past case instantly.</p>
+  </div>
+
+  <div class="history-toolbar glass-panel">
+    <input type="text" id="historySearch" class="glass-input" placeholder="🔍 Search history..." />
+    <select id="historyFilter" class="glass-select">
+      <option value="all">All Categories</option>
+      <option value="sorting">Sorting</option>
+      <option value="knapsack">Knapsack</option>
+      <option value="shortestpath">Shortest Path</option>
+      <option value="graph">Graph</option>
+    </select>
+    <button class="btn-ghost" id="btnClearHistory">🗑 Clear All</button>
+    <button class="btn-primary" id="btnExportHistory">⬇ Export JSON</button>
+  </div>
+
+  <div class="history-list" id="historyList">
+    <div class="empty-state">
+      <div class="es-icon">📋</div>
+      <p>No history yet. Run some algorithms first!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST NOTIFICATION ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Computing...</div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
