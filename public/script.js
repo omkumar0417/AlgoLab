@@ -40,6 +40,13 @@ function getDisplayName(user = {}) {
 // NAVIGATION
 // ============================================================
 function navigateTo(page, param) {
+  const protectedPages = new Set(['visualize', 'compare', 'suggest']);
+  if (protectedPages.has(page) && !State.auth.token) {
+    showToast('Login required to use this feature', 'error');
+    page = 'auth';
+    param = null;
+  }
+
   if (page === 'analytics' && !State.auth.isAdmin) {
     showToast('Admin access required', 'error');
     page = State.auth.token ? 'history' : 'auth';
@@ -825,6 +832,7 @@ function updateWhyPanel(algo) {
 }
 
 function startViz() {
+  if (!requireLogin('Login required to run visualizations')) return;
   const algo = document.getElementById('vizAlgo').value;
   State.vizAlgo = algo;
   resetViz();
@@ -868,6 +876,7 @@ function resetViz() {
 }
 
 function stepViz() {
+  if (!requireLogin('Login required to run visualizations')) return;
   // Step mode — manually advance one step
   if (!State.vizRunning) startViz();
   State.vizPaused = true;
@@ -1870,6 +1879,7 @@ function updateCompareHelp(cat) {
 }
 
 function runComparison() {
+  if (!requireLogin('Login required to run comparisons')) return;
   const cat  = document.getElementById('compareCategory').value;
   const size = +document.getElementById('compareSize').value;
   document.getElementById('failureShowcase').style.display = cat === 'failure' ? 'block' : 'none';
@@ -2316,6 +2326,7 @@ function initSuggest() {
 }
 
 function runSuggest() {
+  if (!requireLogin('Login required to use suggestions')) return;
   const input = document.getElementById('suggestInput').value.toLowerCase().trim();
   if(!input) { showToast('Please describe your problem first', 'error'); return; }
 
