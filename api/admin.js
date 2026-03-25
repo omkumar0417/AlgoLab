@@ -9,19 +9,34 @@ router.get('/stats', requireAuth, requireAdmin, async (req, res) => {
     const db = await connectDB();
     if (!db) return res.status(500).json({ success: false, message: 'database not configured' });
 
-    const [totalUsers, totalHistory, latestRuns] = await Promise.all([
+    const [users, totalUsers, totalHistory, latestRuns] = await Promise.all([
+      db.collection('users').find({}, { projection: { userId: 1, displayName: 1, lastLoginAt: 1, createdAt: 1 } }).toArray(),
       db.collection('users').countDocuments(),
       db.collection('history').countDocuments(),
-      db.collection('history').find({}).sort({ createdAt: -1 }).limit(200).toArray(),
+      db.collection('history').find({}).sort({ createdAt: -1 }).limit(250).toArray(),
     ]);
 
     const algorithmCounts = {};
     const categoryCounts = {};
+    const userCounts = {};
+    const dailyCounts = {};
+    let totalComparisons = 0;
+    const recentCutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
     latestRuns.forEach(entry => {
       algorithmCounts[entry.algo] = (algorithmCounts[entry.algo] || 0) + 1;
       categoryCounts[entry.category] = (categoryCounts[entry.category] || 0) + 1;
+      userCounts[entry.userId] = (userCounts[entry.userId] || 0) + 1;
+      totalComparisons += entry.comparison ? 1 : 0;
+
+      const key = entry.createdAt ? new Date(entry.createdAt).toISOString().slice(0, 10) : 'unknown';
+      dailyCounts[key] = (dailyCounts[key] || 0) + 1;
     });
+
+    const userLookup = users.reduce((acc, user) => {
+      acc[user.userId] = user;
+      return acc;
+    }, {});
 
     const mostRunAlgorithms = Object.entries(algorithmCounts)
       .sort((a, b) => b[1] - a[1])
@@ -33,13 +48,47 @@ router.get('/stats', requireAuth, requireAdmin, async (req, res) => {
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }));
 
+    const topUsers = Object.entries(userCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([userId, count]) => {
+        const user = userLookup[userId] || {};
+        return {
+          userId,
+          displayName: user.displayName || userId,
+          count,
+          lastLoginAt: user.lastLoginAt || null,
+        };
+      });
+
+    const recentActivity = latestRuns.slice(0, 8).map(entry => ({
+      userId: entry.userId || 'guest',
+      displayName: (userLookup[entry.userId] || {}).displayName || entry.userId || 'guest',
+      algo: entry.algo || '—',
+      category: entry.category || '—',
+      createdAt: entry.createdAt || null,
+      comparison: !!entry.comparison,
+    }));
+
+    const recentActivityByDay = Object.entries(dailyCounts)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-7)
+      .map(([date, count]) => ({ date, count }));
+
+    const activeUsers7d = users.filter(user => user.lastLoginAt && new Date(user.lastLoginAt).getTime() >= recentCutoff).length;
+
     res.json({
       success: true,
       stats: {
         totalUsers,
         totalRuns: totalHistory,
+        totalComparisons,
+        activeUsers7d,
         mostRunAlgorithms,
         commonProblemTypes,
+        topUsers,
+        recentActivity,
+        recentActivityByDay,
       },
     });
   } catch (err) {

@@ -45,7 +45,7 @@
       <canvas id="heroCanvas"></canvas>
     </div>
     <div class="hero-content">
-      <div class="hero-badge">DAA Strategy Lab · v6.0</div>
+      <div class="hero-badge">DAA Strategy Lab · v7.0</div>
       <div class="hero-welcome" id="heroWelcome" hidden></div>
       <h1 class="hero-title">
         <span class="title-line">Explore</span>
@@ -655,12 +655,12 @@
       <div class="summary-value" id="analyticsRuns">0</div>
     </div>
     <div class="glass-panel summary-card">
-      <div class="summary-label">Top Algorithm</div>
-      <div class="summary-value" id="analyticsTopAlgo">—</div>
+      <div class="summary-label">Total Comparisons</div>
+      <div class="summary-value" id="analyticsComparisons">0</div>
     </div>
     <div class="glass-panel summary-card">
-      <div class="summary-label">Top Problem Type</div>
-      <div class="summary-value" id="analyticsTopType">—</div>
+      <div class="summary-label">Active Users (7d)</div>
+      <div class="summary-value" id="analyticsActiveUsers">0</div>
     </div>
   </div>
 
@@ -672,6 +672,18 @@
     <div class="glass-panel analytics-list">
       <div class="chart-title">// COMMON PROBLEM TYPES</div>
       <div id="analyticsTypes">Admin login required.</div>
+    </div>
+    <div class="glass-panel analytics-list">
+      <div class="chart-title">// TOP USERS</div>
+      <div id="analyticsUsersList">Admin login required.</div>
+    </div>
+    <div class="glass-panel analytics-list">
+      <div class="chart-title">// RECENT ACTIVITY</div>
+      <div id="analyticsRecentActivity">Admin login required.</div>
+    </div>
+    <div class="glass-panel analytics-list analytics-chart">
+      <div class="chart-title">// ACTIVITY OVER 7 DAYS</div>
+      <canvas id="analyticsActivityChart"></canvas>
     </div>
   </div>
 </div>

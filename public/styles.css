@@ -1186,6 +1186,9 @@ body::before {
 .analytics-list {
   padding: 1.25rem;
 }
+.analytics-chart {
+  grid-column: 1 / -1;
+}
 .analytics-row {
   display: flex;
   justify-content: space-between;
@@ -1198,6 +1201,32 @@ body::before {
 .analytics-row strong {
   color: var(--accent);
   font-family: var(--font-mono);
+}
+.analytics-row small {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+}
+.analytics-activity {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.analytics-activity:last-child {
+  border-bottom: 0;
+}
+.analytics-activity strong {
+  color: var(--text-primary);
+}
+.analytics-activity span,
+.analytics-activity small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+.analytics-activity div:last-child {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
 }
 
 .chart-box {

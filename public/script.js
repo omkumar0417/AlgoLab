@@ -254,10 +254,55 @@ function updateHistorySummary() {
   document.getElementById('summaryComparisons').textContent = String(comparisons);
 }
 
+function renderAnalyticsRows(items, emptyText) {
+  return items.length
+    ? items.map(item => `<div class="analytics-row"><span>${item.label}</span><strong>${item.value}</strong></div>`).join('')
+    : emptyText;
+}
+
+let analyticsActivityChart = null;
+
+function renderAnalyticsActivityChart(rows) {
+  const canvas = document.getElementById('analyticsActivityChart');
+  if (!canvas) return;
+  if (analyticsActivityChart) analyticsActivityChart.destroy();
+
+  const labels = rows.map(item => item.date);
+  const values = rows.map(item => item.count);
+  analyticsActivityChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Runs',
+        data: values,
+        borderColor: '#00e5ff',
+        backgroundColor: 'rgba(0,229,255,0.12)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#00e5ff',
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
+      },
+      scales: {
+        x: { ticks: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' } },
+      },
+    },
+  });
+}
+
 async function loadAnalytics() {
   if (!State.auth.token || !State.auth.isAdmin) {
     document.getElementById('analyticsAlgorithms').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     document.getElementById('analyticsTypes').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
+    document.getElementById('analyticsUsersList').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
+    document.getElementById('analyticsRecentActivity').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     return;
   }
 
@@ -271,17 +316,26 @@ async function loadAnalytics() {
     const stats = data.stats;
     document.getElementById('analyticsUsers').textContent = String(stats.totalUsers);
     document.getElementById('analyticsRuns').textContent = String(stats.totalRuns);
-    document.getElementById('analyticsTopAlgo').textContent = stats.mostRunAlgorithms[0]?.name || '—';
-    document.getElementById('analyticsTopType').textContent = stats.commonProblemTypes[0]?.name || '—';
+    document.getElementById('analyticsComparisons').textContent = String(stats.totalComparisons || 0);
+    document.getElementById('analyticsActiveUsers').textContent = String(stats.activeUsers7d || 0);
     document.getElementById('analyticsAlgorithms').innerHTML = stats.mostRunAlgorithms.length
       ? stats.mostRunAlgorithms.map(item => `<div class="analytics-row"><span>${item.name}</span><strong>${item.count}</strong></div>`).join('')
       : 'No algorithm data yet.';
     document.getElementById('analyticsTypes').innerHTML = stats.commonProblemTypes.length
       ? stats.commonProblemTypes.map(item => `<div class="analytics-row"><span>${item.name}</span><strong>${item.count}</strong></div>`).join('')
       : 'No category data yet.';
+    document.getElementById('analyticsUsersList').innerHTML = stats.topUsers.length
+      ? stats.topUsers.map(item => `<div class="analytics-row"><span>${item.displayName} <small>@${item.userId}</small></span><strong>${item.count}</strong></div>`).join('')
+      : 'No user activity yet.';
+    document.getElementById('analyticsRecentActivity').innerHTML = stats.recentActivity.length
+      ? stats.recentActivity.map(item => `<div class="analytics-activity"><div><strong>${item.displayName}</strong> <span>@${item.userId}</span></div><div>${item.algo}</div><small>${item.category}${item.comparison ? ' • comparison' : ''}</small></div>`).join('')
+      : 'No category data yet.';
+    renderAnalyticsActivityChart(stats.recentActivityByDay || []);
   } catch (err) {
     document.getElementById('analyticsAlgorithms').textContent = err.message || 'Could not load analytics.';
     document.getElementById('analyticsTypes').textContent = 'Try again after more runs are saved.';
+    document.getElementById('analyticsUsersList').textContent = 'Try again after more runs are saved.';
+    document.getElementById('analyticsRecentActivity').textContent = 'Try again after more runs are saved.';
   }
 }
 
