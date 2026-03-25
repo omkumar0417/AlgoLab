@@ -712,7 +712,6 @@
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-tab="login">Login</button>
         <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
-        <button class="auth-tab" data-auth-tab="reset">Reset</button>
       </div>
 
       <div class="auth-panel">
@@ -743,43 +742,12 @@
           <button class="btn-primary auth-submit" type="submit">Create Account</button>
           <div class="auth-footnote">Already have an account? Switch to <span data-auth-tab="login" class="auth-inline-link">Login</span>.</div>
         </form>
-
-        <form id="resetForm" class="auth-form">
-          <label>User ID</label>
-          <input type="text" class="glass-input" id="resetUserId" placeholder="your_id" autocomplete="username" />
-          <label>New Password</label>
-          <input type="password" class="glass-input" id="resetPassword" placeholder="new password" autocomplete="new-password" />
-          <label>Confirm New Password</label>
-          <input type="password" class="glass-input" id="resetConfirmPassword" placeholder="repeat new password" autocomplete="new-password" />
-          <button class="btn-primary auth-submit" type="submit">Reset Password</button>
-          <div class="auth-footnote">Remember your password? Switch to <span data-auth-tab="login" class="auth-inline-link">Login</span>.</div>
-        </form>
       </div>
 
       <div class="auth-actions">
         <button class="btn-ghost" id="btnLogout" type="button">Logout</button>
         <span class="auth-status" id="authStatus">Not logged in</span>
       </div>
-    </div>
-
-    <div class="auth-info glass-panel">
-      <h3>Why login matters</h3>
-      <p>Once you sign in, AlgoLab starts feeling personal — your display name, your history, your presets, and your progress stay connected to your account.</p>
-      <div class="auth-security-list">
-        <div class="security-item">
-          <span class="security-kicker">Personal</span>
-          <strong>Save runs, comparisons, and presets to your account</strong>
-        </div>
-        <div class="security-item">
-          <span class="security-kicker">Secure</span>
-          <strong>Hashed passwords and JWT sessions keep access controlled</strong>
-        </div>
-        <div class="security-item">
-          <span class="security-kicker">Admin</span>
-          <strong>Admin users can review platform activity and usage trends</strong>
-        </div>
-      </div>
-      <div class="auth-note">Tip: Set <span class="mono">JWT_SECRET</span> in .env when deploying.</div>
     </div>
   </div>
 </div>
