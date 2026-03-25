@@ -1822,7 +1822,22 @@ function compareSorting(n) {
   let msSteps=0;
   function msCount(n){if(n<=1)return;msCount(Math.floor(n/2));msCount(n-Math.floor(n/2));msSteps+=n;}
   msCount(n);
-  const ma=[...arr]; const t1=performance.now(); ma.sort((a,b)=>a-b); const msTime=performance.now()-t1;
+  const ma=[...arr];
+  const t1=performance.now();
+  function mergeSortSim(a) {
+    if (a.length <= 1) return a;
+    const mid = Math.floor(a.length / 2);
+    const left = mergeSortSim(a.slice(0, mid));
+    const right = mergeSortSim(a.slice(mid));
+    const merged = [];
+    let i = 0, j = 0;
+    while (i < left.length && j < right.length) {
+      merged.push(left[i] <= right[j] ? left[i++] : right[j++]);
+    }
+    return [...merged, ...left.slice(i), ...right.slice(j)];
+  }
+  mergeSortSim(ma);
+  const msTime=performance.now()-t1;
 
   return [
     {name:'Quick Sort',paradigm:'Divide & Conquer',time:qsTime.toFixed(3),steps:qsSteps,swaps:qsSwaps,optimal:true,space:'O(log n)',note:'Average case'},
@@ -1873,9 +1888,9 @@ function compareShortestPath(n) {
   const bfsSteps = vCount + vCount * 2;
 
   return [
-    {name:'BFS (Unweighted)',paradigm:'Graph Traversal',time:(bfsSteps*0.001).toFixed(3),steps:bfsSteps,optimal:true,space:'O(V+E)',note:'Unweighted graphs only'},
-    {name:"Dijkstra's",paradigm:'Greedy',time:(dijSteps*0.001).toFixed(3),steps:dijSteps,optimal:true,space:'O(V²)',note:'Non-negative weights'},
-    {name:'Floyd-Warshall',paradigm:'Dynamic Programming',time:(dpSteps*0.001).toFixed(3),steps:dpSteps,optimal:true,space:`O(V²)=${vCount*vCount}`,note:'All-pairs shortest paths'},
+    {name:'BFS (Unweighted)',paradigm:'Graph Traversal',time:(bfsSteps*0.001).toFixed(3),steps:bfsSteps,optimal:true,space:'O(V+E)',note:'Best for unweighted shortest path'},
+    {name:"Dijkstra's",paradigm:'Greedy',time:(dijSteps*0.001).toFixed(3),steps:dijSteps,optimal:true,space:'O(V²)',note:'Best for non-negative weighted shortest path'},
+    {name:'Floyd-Warshall',paradigm:'Dynamic Programming',time:(dpSteps*0.001).toFixed(3),steps:dpSteps,optimal:true,space:`O(V²)=${vCount*vCount}`,note:'Best for all-pairs shortest paths'},
   ];
 }
 
@@ -1888,7 +1903,7 @@ function showFailureCases() {
       <h4 style="color:var(--warning);margin-bottom:0.5rem">1. Greedy Fails for 0/1 Knapsack</h4>
       <div class="warn-box">
         Greedy picks by value/weight ratio: item C (ratio=5.0) first, then B (ratio=4.0). 
-        But the optimal solution is A+B with total value 18 vs greedy's 16.
+        But the optimal solution is A+C with total value 14, while the ratio-based choice can miss the best combination.
       </div>
       <div class="counterexample">
         Items: A(w=3,v=9), B(w=4,v=10), C(w=1,v=5)  |  Capacity W=4
@@ -1899,7 +1914,7 @@ function showFailureCases() {
         <br>
         <span class="counter-wrong">Greedy result: value = 5 ❌</span>
         <br>
-        <span class="counter-correct">DP optimal:    value = 19 (A+C, or 14 if C+B) ✓</span>
+        <span class="counter-correct">DP optimal:    value = 19 (A+B) ✓</span>
       </div>
     </div>
     
