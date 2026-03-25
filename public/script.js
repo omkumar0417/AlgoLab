@@ -1656,6 +1656,7 @@ async function runTSPViz() {
   const ctx = canvas.getContext('2d');
   canvas.width = canvas.offsetWidth || 600;
   canvas.height = 320;
+  State.vizRunning = true;
 
   const cities = [
     {x:100,y:100,l:'A'},{x:300,y:60,l:'B'},
@@ -1744,6 +1745,7 @@ async function runTSPViz() {
   await bnb([0],visited,0);
   drawTSP([],bestPath);
   log(`✓ Best tour: ${bestPath.map(i=>cities[i].l).join('→')} | Cost: ${bestCost}`, 'success');
+  State.vizRunning = false;
 }
 
 // ============================================================
