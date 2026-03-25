@@ -1870,6 +1870,14 @@ body::before {
   color: var(--accent);
 }
 
+.input-hint {
+  margin-top: 0.45rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
 /* ================================================
    LOADING
    ================================================ */

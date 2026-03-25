@@ -101,6 +101,67 @@ function getAuthHeaders() {
   return headers;
 }
 
+function getCustomInputRaw() {
+  return document.getElementById('customInput')?.value.trim() || '';
+}
+
+function getCustomTokens(raw = getCustomInputRaw()) {
+  if (!raw) return [];
+  return raw
+    .replace(/\r/g, '\n')
+    .split(/[\s,;|]+/)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function getCustomNumbers(raw = getCustomInputRaw()) {
+  return getCustomTokens(raw)
+    .map(item => Number(item))
+    .filter(Number.isFinite);
+}
+
+function getCustomText(raw = getCustomInputRaw()) {
+  return raw.replace(/[,\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function getCustomTextPair(raw = getCustomInputRaw()) {
+  const parts = raw.split(/\s*\|\s*|\n+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) return { left: parts[0], right: parts[1] };
+  return { left: raw.trim(), right: '' };
+}
+
+function updateCustomInputHint(algo) {
+  const input = document.getElementById('customInput');
+  const hint = document.getElementById('customInputHint');
+  if (!input || !hint) return;
+
+  const hints = {
+    quicksort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
+    mergesort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
+    heapsort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
+    bfs: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
+    dijkstra: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
+    bellmanford: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
+    prim: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
+    kruskal: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
+    knapsack_dp: ['e.g. 2:6, 2:10, 3:12, 5:13', 'Use w:v pairs for custom item weights and values.'],
+    knapsack_greedy: ['e.g. 2:6, 2:10, 3:12, 5:13', 'Use w:v pairs for custom item weights and values.'],
+    binarysearch: ['e.g. 1,3,5,7,9,11', 'Use a sorted list of numbers.'],
+    nqueens: ['e.g. 8', 'Enter one number: board size N.'],
+    tsp: ['e.g. 100:100, 300:60, 500:120, 400:260, 150:260', 'Use x:y coordinate pairs for city positions.'],
+    floyd: ['e.g. 0,3,999,7 / 8,0,2,999 / 5,999,0,1 / 2,999,999,0', 'Use a square matrix of numbers; 999 means no edge.'],
+    rabinkarp: ['e.g. hello world | world', 'Use text | pattern, or put text on the first line and pattern on the second.'],
+    kmp: ['e.g. hello world | world', 'Use text | pattern, or put text on the first line and pattern on the second.'],
+    huffman: ['e.g. BANANA_BANDANA', 'Type the text to compress with Huffman coding.'],
+    avl: ['e.g. 30,20,40,10,25,35,50,5', 'Use numbers to animate AVL insertions.'],
+    redblack: ['e.g. 30,20,40,10,25,35,50,5', 'Use numbers to animate Red-Black insertions.'],
+  };
+
+  const [placeholder, text] = hints[algo] || ['e.g. 5,3,8,1,9,2', 'Use comma-separated values.'];
+  input.placeholder = placeholder;
+  hint.textContent = text;
+}
+
 function getAlgorithmParadigm(algoName) {
   const map = {
     'Quick Sort': 'Divide & Conquer',
@@ -238,10 +299,150 @@ function saveCurrentPreset() {
 }
 
 function parseCustomArrayInput() {
-  const raw = document.getElementById('customInput')?.value.trim();
-  if (!raw) return null;
-  const values = raw.split(',').map(item => Number(item.trim())).filter(item => Number.isFinite(item));
+  const values = getCustomNumbers();
   return values.length ? values : null;
+}
+
+function getCustomGraphModel() {
+  const numbers = getCustomNumbers();
+  if (!numbers.length) return SAMPLE_GRAPH;
+
+  const nodes = SAMPLE_GRAPH.nodes.map((node, idx) => ({ ...node, label: node.label || String.fromCharCode(65 + idx) }));
+  const edges = SAMPLE_GRAPH.edges.map((edge, idx) => ({
+    ...edge,
+    w: Math.max(1, Math.round(numbers[idx % numbers.length])),
+  }));
+  return { nodes, edges };
+}
+
+function getCustomKnapsackItems() {
+  const raw = getCustomInputRaw();
+  if (!raw) return null;
+
+  const pairMatches = raw.match(/-?\d+(?:\.\d+)?\s*:\s*-?\d+(?:\.\d+)?/g);
+  if (pairMatches && pairMatches.length) {
+    const items = pairMatches.map(pair => {
+      const [w, v] = pair.split(':').map(n => Number(n.trim()));
+      return { w: Math.max(1, Math.round(w)), v: Math.max(1, Math.round(v)) };
+    }).filter(item => Number.isFinite(item.w) && Number.isFinite(item.v));
+    if (items.length) return items;
+  }
+
+  const nums = getCustomNumbers(raw);
+  if (nums.length >= 2) {
+    const items = [];
+    for (let i = 0; i < nums.length - 1; i += 2) {
+      items.push({
+        w: Math.max(1, Math.round(nums[i])),
+        v: Math.max(1, Math.round(nums[i + 1])),
+      });
+    }
+    if (items.length) return items;
+  }
+
+  return null;
+}
+
+function getCustomTreeValues() {
+  const nums = getCustomNumbers();
+  return nums.length ? nums.map(n => Math.round(n)) : null;
+}
+
+function getCustomFloydMatrix() {
+  const raw = getCustomInputRaw();
+  if (!raw) return null;
+
+  const rows = raw
+    .replace(/\r/g, '\n')
+    .split(/[;\n]+/)
+    .map(row => row.trim())
+    .filter(Boolean)
+    .map(row => row.split(/\s*,\s*/).map(val => Number(val.trim())))
+    .filter(row => row.length > 0 && row.every(Number.isFinite));
+
+  if (rows.length < 3) return null;
+  const size = rows[0].length;
+  if (!rows.every(row => row.length === size) || rows.length !== size) return null;
+
+  return {
+    labels: Array.from({ length: size }, (_, i) => String.fromCharCode(65 + i)),
+    dist: rows.map(row => row.map(v => (v >= 999 ? 999 : Math.max(0, Math.round(v))))),
+  };
+}
+
+function getCustomTspCities() {
+  const raw = getCustomInputRaw();
+  if (!raw) return null;
+
+  const pairMatches = raw.match(/-?\d+(?:\.\d+)?\s*:\s*-?\d+(?:\.\d+)?/g);
+  const coords = [];
+  if (pairMatches && pairMatches.length) {
+    pairMatches.forEach((pair, idx) => {
+      const [x, y] = pair.split(':').map(n => Number(n.trim()));
+      if (Number.isFinite(x) && Number.isFinite(y)) coords.push({ x, y, l: String.fromCharCode(65 + idx) });
+    });
+  } else {
+    const nums = getCustomNumbers(raw);
+    for (let i = 0; i < nums.length - 1; i += 2) {
+      const x = Number(nums[i]);
+      const y = Number(nums[i + 1]);
+      if (Number.isFinite(x) && Number.isFinite(y)) coords.push({ x, y, l: String.fromCharCode(65 + coords.length) });
+    }
+  }
+  return coords.length >= 3 ? coords : null;
+}
+
+function buildTreeSequence(customValues, minLength = 8) {
+  const base = [30, 20, 40, 10, 25, 35, 50, 5];
+  const seq = [];
+  const seen = new Set();
+  (customValues || []).forEach(value => {
+    if (!seen.has(value)) {
+      seq.push(value);
+      seen.add(value);
+    }
+  });
+  for (const value of base) {
+    if (seq.length >= minLength) break;
+    if (!seen.has(value)) {
+      seq.push(value);
+      seen.add(value);
+    }
+  }
+  while (seq.length < minLength) {
+    const next = base[seq.length % base.length] + seq.length * 2;
+    if (!seen.has(next)) {
+      seq.push(next);
+      seen.add(next);
+    }
+  }
+  return seq.slice(0, minLength);
+}
+
+function buildTspCities(customCities) {
+  const fallback = [
+    {x:100,y:100,l:'A'},{x:300,y:60,l:'B'},
+    {x:500,y:120,l:'C'},{x:400,y:260,l:'D'},{x:150,y:260,l:'E'}
+  ];
+  if (!customCities || !customCities.length) return fallback;
+  const cities = customCities.slice(0, 8).map((city, idx) => ({
+    x: city.x,
+    y: city.y,
+    l: city.l || String.fromCharCode(65 + idx),
+  }));
+  while (cities.length < 3) {
+    const next = fallback[cities.length];
+    cities.push({ ...next, l: String.fromCharCode(65 + cities.length) });
+  }
+  return cities;
+}
+
+function getCustomStringMatchInput() {
+  const raw = getCustomInputRaw();
+  if (!raw) return null;
+  const parts = raw.split(/\s*\|\s*|\n+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) return { text: parts[0], pattern: parts[1] };
+  return { text: raw.trim(), pattern: '' };
 }
 
 function updateHistorySummary() {
@@ -865,6 +1066,7 @@ function initVisualizer() {
     resetViz();
     updateComplexityBox(algoSel.value);
     updateWhyPanel(algoSel.value);
+    updateCustomInputHint(algoSel.value);
   });
   speedSldr.addEventListener('input', () => {
     State.vizSpeed = +speedSldr.value;
@@ -882,6 +1084,7 @@ function initVisualizer() {
 
   updateComplexityBox('quicksort');
   updateWhyPanel('quicksort');
+  updateCustomInputHint('quicksort');
   loadPresets();
   renderPresets();
 }
@@ -997,9 +1200,9 @@ function delay(ms) {
 // SORTING VISUALIZER
 // ============================================================
 function genArray(n) {
-  const custom = document.getElementById('customInput').value.trim();
-  if (custom) {
-    return custom.split(',').map(v => Math.max(1, Math.min(100, parseInt(v.trim()) || 50)));
+  const custom = getCustomNumbers();
+  if (custom.length) {
+    return custom.map(v => Math.max(1, Math.min(100, Math.round(v || 50))));
   }
   return Array.from({length: n}, () => Math.floor(Math.random() * 90) + 10);
 }
@@ -1054,7 +1257,7 @@ async function runSortViz(algo) {
   addToHistory({
     category: 'sorting',
     algo: labels[algo],
-    input: `Array of ${n}`,
+    input: customArr ? customArr.join(', ') : `Array of ${n}`,
     result: `Sorted in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
@@ -1167,7 +1370,7 @@ const SAMPLE_GRAPH = {
   ],
 };
 
-function drawGraph(visited=[], current=-1, path=[], distances={}) {
+function drawGraph(visited=[], current=-1, path=[], distances={}, graph = SAMPLE_GRAPH) {
   const canvas = document.getElementById('graphCanvas');
   const ctx = canvas.getContext('2d');
   canvas.width = canvas.offsetWidth || 600;
@@ -1181,9 +1384,9 @@ function drawGraph(visited=[], current=-1, path=[], distances={}) {
   const ny = n => 30 + n.y * scaleY;
 
   // Draw edges
-  SAMPLE_GRAPH.edges.forEach(e => {
-    const a = SAMPLE_GRAPH.nodes[e.from];
-    const b = SAMPLE_GRAPH.nodes[e.to];
+  graph.edges.forEach(e => {
+    const a = graph.nodes[e.from];
+    const b = graph.nodes[e.to];
     const inPath = path.some(([p1,p2]) => (p1===e.from&&p2===e.to)||(p1===e.to&&p2===e.from));
     ctx.beginPath();
     ctx.moveTo(nx(a), ny(a));
@@ -1199,7 +1402,7 @@ function drawGraph(visited=[], current=-1, path=[], distances={}) {
   });
 
   // Draw nodes
-  SAMPLE_GRAPH.nodes.forEach(n => {
+  graph.nodes.forEach(n => {
     const x = nx(n), y = ny(n);
     const isVisited = visited.includes(n.id);
     const isCurrent = current === n.id;
@@ -1230,7 +1433,8 @@ function drawGraph(visited=[], current=-1, path=[], distances={}) {
 async function runGraphViz(algo) {
   const canvas = document.getElementById('graphCanvas');
   canvas.classList.remove('hidden');
-  drawGraph();
+  const graph = getCustomGraphModel();
+  drawGraph([], -1, [], {}, graph);
   const graphLabels = {
     bfs: 'BFS',
     dijkstra: "Dijkstra's",
@@ -1249,10 +1453,10 @@ async function runGraphViz(algo) {
       const node = queue.shift();
       if (visited.includes(node)) continue;
       visited.push(node);
-      drawGraph(visited, node, path);
-      log(`Visit ${SAMPLE_GRAPH.nodes[node].label} | Queue: [${queue.map(q=>SAMPLE_GRAPH.nodes[q].label)}]`);
+      drawGraph(visited, node, path, {}, graph);
+      log(`Visit ${graph.nodes[node].label} | Queue: [${queue.map(q=>graph.nodes[q].label)}]`);
       await delay(spd());
-      SAMPLE_GRAPH.edges.forEach(e => {
+      graph.edges.forEach(e => {
         if (e.from === node && !visited.includes(e.to)) {
           queue.push(e.to);
           path.push([e.from, e.to]);
@@ -1265,12 +1469,12 @@ async function runGraphViz(algo) {
     }
     log('✓ BFS complete! All nodes visited.', 'success');
   } else if (algo === 'dijkstra') {
-    const n = SAMPLE_GRAPH.nodes.length;
+    const n = graph.nodes.length;
     const dist = Array(n).fill(Infinity);
     const visited = [];
     dist[0] = 0;
     const distances = {0:0};
-    drawGraph([], 0, [], distances);
+    drawGraph([], 0, [], distances, graph);
 
     for (let iter = 0; iter < n; iter++) {
       let u = -1;
@@ -1279,36 +1483,36 @@ async function runGraphViz(algo) {
       }
       if (dist[u] === Infinity) break;
       visited.push(u);
-      log(`Relax from ${SAMPLE_GRAPH.nodes[u].label} (dist=${dist[u]})`);
-      drawGraph(visited, u, [], distances);
+      log(`Relax from ${graph.nodes[u].label} (dist=${dist[u]})`);
+      drawGraph(visited, u, [], distances, graph);
       await delay(spd());
 
-      SAMPLE_GRAPH.edges.forEach(e => {
+      graph.edges.forEach(e => {
         const v = e.from === u ? e.to : (e.to === u ? e.from : -1);
         if (v !== -1 && dist[u] + e.w < dist[v]) {
           dist[v] = dist[u] + e.w;
           distances[v] = dist[v];
-          log(`  Update dist[${SAMPLE_GRAPH.nodes[v].label}] = ${dist[v]}`);
-          drawGraph(visited, u, [], distances);
+          log(`  Update dist[${graph.nodes[v].label}] = ${dist[v]}`);
+          drawGraph(visited, u, [], distances, graph);
         }
       });
       await delay(spd() / 2);
     }
-    log(`✓ Dijkstra done! Distances: ${SAMPLE_GRAPH.nodes.map((n,i)=>`${n.label}=${dist[i]}`).join(', ')}`, 'success');
+    log(`✓ Dijkstra done! Distances: ${graph.nodes.map((n,i)=>`${n.label}=${dist[i]}`).join(', ')}`, 'success');
   } else if (algo === 'bellmanford') {
-    const n = SAMPLE_GRAPH.nodes.length;
+    const n = graph.nodes.length;
     const dist = Array(n).fill(Infinity);
     dist[0] = 0;
     const distances = { 0: 0 };
 
     for (let pass = 0; pass < n - 1; pass++) {
       log(`Pass ${pass + 1}: relax every edge`, 'highlight');
-      for (const edge of SAMPLE_GRAPH.edges) {
+      for (const edge of graph.edges) {
         if (dist[edge.from] !== Infinity && dist[edge.from] + edge.w < dist[edge.to]) {
           dist[edge.to] = dist[edge.from] + edge.w;
           distances[edge.to] = dist[edge.to];
-          drawGraph([], edge.to, [[edge.from, edge.to]], distances);
-          log(`  Update ${SAMPLE_GRAPH.nodes[edge.to].label} to ${dist[edge.to]}`);
+          drawGraph([], edge.to, [[edge.from, edge.to]], distances, graph);
+          log(`  Update ${graph.nodes[edge.to].label} to ${dist[edge.to]}`);
           await delay(spd() / 2);
         }
       }
@@ -1317,9 +1521,9 @@ async function runGraphViz(algo) {
   } else if (algo === 'prim') {
     const visited = new Set([0]);
     const mst = [];
-    while (visited.size < SAMPLE_GRAPH.nodes.length) {
+    while (visited.size < graph.nodes.length) {
       let best = null;
-      SAMPLE_GRAPH.edges.forEach(edge => {
+      graph.edges.forEach(edge => {
         const touchesVisited = visited.has(edge.from) || visited.has(edge.to);
         const crossesCut = visited.has(edge.from) !== visited.has(edge.to);
         if (touchesVisited && crossesCut && (!best || edge.w < best.w)) best = edge;
@@ -1328,26 +1532,26 @@ async function runGraphViz(algo) {
       mst.push([best.from, best.to]);
       visited.add(best.from);
       visited.add(best.to);
-      drawGraph([...visited], best.to, mst);
-      log(`Take edge ${SAMPLE_GRAPH.nodes[best.from].label}-${SAMPLE_GRAPH.nodes[best.to].label} (w=${best.w})`);
+      drawGraph([...visited], best.to, mst, {}, graph);
+      log(`Take edge ${graph.nodes[best.from].label}-${graph.nodes[best.to].label} (w=${best.w})`);
       await delay(spd());
     }
     log(`✓ Prim's MST complete with ${mst.length} edges.`, 'success');
   } else if (algo === 'kruskal') {
-    const parent = Array.from({ length: SAMPLE_GRAPH.nodes.length }, (_, i) => i);
+    const parent = Array.from({ length: graph.nodes.length }, (_, i) => i);
     const find = x => (parent[x] === x ? x : (parent[x] = find(parent[x])));
     const union = (a, b) => { parent[find(a)] = find(b); };
     const mst = [];
-    const edges = [...SAMPLE_GRAPH.edges].sort((a, b) => a.w - b.w);
+    const edges = [...graph.edges].sort((a, b) => a.w - b.w);
 
     for (const edge of edges) {
       if (find(edge.from) !== find(edge.to)) {
         union(edge.from, edge.to);
         mst.push([edge.from, edge.to]);
-        drawGraph([], edge.to, mst);
-        log(`Keep edge ${SAMPLE_GRAPH.nodes[edge.from].label}-${SAMPLE_GRAPH.nodes[edge.to].label} (w=${edge.w})`);
+        drawGraph([], edge.to, mst, {}, graph);
+        log(`Keep edge ${graph.nodes[edge.from].label}-${graph.nodes[edge.to].label} (w=${edge.w})`);
       } else {
-        log(`Skip edge ${SAMPLE_GRAPH.nodes[edge.from].label}-${SAMPLE_GRAPH.nodes[edge.to].label}; cycle detected`);
+        log(`Skip edge ${graph.nodes[edge.from].label}-${graph.nodes[edge.to].label}; cycle detected`);
       }
       await delay(spd() / 2);
     }
@@ -1357,7 +1561,7 @@ async function runGraphViz(algo) {
   addToHistory({
     category: 'graph',
     algo: graphLabels[algo],
-    input: '6-node weighted graph',
+    input: getCustomInputRaw() || 'sample weighted graph',
     result: `Traversal in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
@@ -1372,16 +1576,17 @@ async function runFloydViz() {
   dpDiv.classList.remove('hidden');
   const wrap = document.getElementById('dpTableWrap');
 
+  const custom = getCustomFloydMatrix();
   const INF = 999;
-  const n = 4;
-  const labels = ['A','B','C','D'];
+  const labels = custom?.labels || ['A','B','C','D'];
   // Initial distance matrix
-  let dist = [
+  let dist = custom?.dist || [
     [0,  3,  INF, 7],
     [8,  0,  2,   INF],
     [5,  INF,0,   1],
     [2,  INF,INF, 0],
   ];
+  const n = dist.length;
 
   function renderTable(highlight=null) {
     let html = '<table><tr><th></th>';
@@ -1402,7 +1607,8 @@ async function runFloydViz() {
   }
 
   renderTable();
-  log('Floyd-Warshall: All-Pairs Shortest Paths', 'highlight');
+  log(`Floyd-Warshall: All-Pairs Shortest Paths (${n}×${n})`, 'highlight');
+  if (custom) log(`Using custom matrix input: ${labels.join(', ')}`);
   const spd = () => Math.max(100, 500 / State.vizSpeed);
 
   for (let k = 0; k < n; k++) {
@@ -1432,8 +1638,11 @@ async function runKnapsackViz(algo) {
   dpDiv.classList.remove('hidden');
   const wrap = document.getElementById('dpTableWrap');
 
-  const items  = [{w:2,v:6},{w:2,v:10},{w:3,v:12},{w:5,v:13}];
-  const W = 7;
+  const customRaw = getCustomInputRaw();
+  const customItems = getCustomKnapsackItems();
+  const items  = customItems || [{w:2,v:6},{w:2,v:10},{w:3,v:12},{w:5,v:13}];
+  const capacityMatch = customRaw.match(/\b(?:w|cap(?:acity)?)\s*=\s*(\d+(?:\.\d+)?)/i);
+  const W = Math.max(1, Math.round(Number(capacityMatch?.[1] || 7)));
   const n = items.length;
   const spd = () => Math.max(100, 400 / State.vizSpeed);
 
@@ -1489,7 +1698,7 @@ async function runKnapsackViz(algo) {
   addToHistory({
     category: 'knapsack',
     algo: algo === 'knapsack_dp' ? '0/1 Knapsack DP' : 'Greedy Knapsack',
-    input: `n=4, W=${W}`,
+    input: customRaw || `n=${n}, W=${W}`,
     result: `Completed in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
@@ -1503,7 +1712,8 @@ async function runNQueensViz() {
   const div = document.getElementById('nqueensViz');
   div.classList.remove('hidden');
   const board = document.getElementById('queensBoard');
-  const n = Math.min(8, +document.getElementById('inputSize').value) || 6;
+  const customN = getCustomNumbers()[0];
+  const n = Math.max(4, Math.min(12, Number.isFinite(customN) ? Math.round(customN) : (+document.getElementById('inputSize').value || 6)));
   board.style.gridTemplateColumns = `repeat(${n},40px)`;
   const queens = Array(n).fill(-1);
   const spd = () => Math.max(50, 400 / State.vizSpeed);
@@ -1562,7 +1772,7 @@ async function runNQueensViz() {
   addToHistory({
     category: 'graph',
     algo: 'N-Queens Backtracking',
-    input: `n=${n}`,
+    input: getCustomInputRaw() || `n=${n}`,
     result: `${solutions} solutions, ${calls} calls`,
     steps: stepCounter,
     time: Date.now(),
@@ -1599,7 +1809,7 @@ async function runBinarySearchViz() {
   addToHistory({
     category: 'search',
     algo: 'Binary Search',
-    input: `Sorted array of ${arr.length}`,
+    input: customArr ? customArr.join(', ') : `Sorted array of ${arr.length}`,
     result: `Target ${target} searched in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
@@ -1613,8 +1823,9 @@ async function runStringMatchViz(algo) {
   const div = document.getElementById('rkViz');
   div.classList.remove('hidden');
   const displayEl = document.getElementById('rkDisplay');
-  const text = 'ABCACABCAB';
-  const pattern = 'CAB';
+  const custom = getCustomStringMatchInput();
+  const text = custom?.text || 'ABCACABCAB';
+  const pattern = custom?.pattern || 'CAB';
   const spd = () => Math.max(150, 600 / State.vizSpeed);
   const matches = [];
 
@@ -1694,7 +1905,7 @@ async function runStringMatchViz(algo) {
   addToHistory({
     category: 'string',
     algo: algo === 'rabinkarp' ? 'Rabin-Karp' : 'KMP Algorithm',
-    input: `"${text}" vs "${pattern}"`,
+    input: getCustomInputRaw() || `"${text}" vs "${pattern}"`,
     result: `${matches.length} matches`,
     steps: stepCounter,
     time: Date.now(),
@@ -1708,7 +1919,8 @@ async function runHuffmanViz() {
   const dpDiv = document.getElementById('dpViz');
   dpDiv.classList.remove('hidden');
   const wrap = document.getElementById('dpTableWrap');
-  const text = 'BANANA_BANDANA';
+  const raw = getCustomInputRaw();
+  const text = raw || 'BANANA_BANDANA';
   const freq = {};
   for (const char of text) freq[char] = (freq[char] || 0) + 1;
   const nodes = Object.entries(freq).map(([char, weight]) => ({ char, weight, label: char }));
@@ -1744,7 +1956,7 @@ async function runHuffmanViz() {
   addToHistory({
     category: 'compression',
     algo: 'Huffman Coding',
-    input: text,
+    input: raw || text,
     result: `Built code tree in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
@@ -1760,107 +1972,110 @@ async function runTreeViz(algo) {
   const treeCaption = document.getElementById('treeCaption');
   treeDiv.classList.remove('hidden');
   const spd = () => Math.max(150, 650 / State.vizSpeed);
-  const values = [30, 20, 40, 10, 25, 35, 50, 5];
+  const customValues = getCustomTreeValues();
+  const values = buildTreeSequence(customValues, 8);
+  const seq = values.slice(0, 8);
+  const pick = idx => seq[idx % seq.length];
 
   const frames = algo === 'avl'
     ? [
         {
-          caption: 'Insert 30 as the root node.',
-          message: 'Insert 30 as the root.',
+          caption: `Insert ${pick(0)} as the root node.`,
+          message: `Insert ${pick(0)} as the root.`,
           nodes: [
-            { id: 30, value: 30, x: 400, y: 50, active: true, type: 'avl' },
+            { id: pick(0), value: pick(0), x: 400, y: 50, active: true, type: 'avl' },
           ],
           edges: [],
         },
         {
-          caption: 'Insert 20 and 40. The tree is still balanced.',
-          message: 'Insert 20 and 40. The tree is still balanced.',
+          caption: `Insert ${pick(1)} and ${pick(2)}. The tree is still balanced.`,
+          message: `Insert ${pick(1)} and ${pick(2)}. The tree is still balanced.`,
           nodes: [
-            { id: 30, value: 30, x: 400, y: 50, type: 'avl' },
-            { id: 20, value: 20, x: 280, y: 150, active: true, type: 'avl' },
-            { id: 40, value: 40, x: 520, y: 150, type: 'avl' },
+            { id: pick(0), value: pick(0), x: 400, y: 50, type: 'avl' },
+            { id: pick(1), value: pick(1), x: 280, y: 150, active: true, type: 'avl' },
+            { id: pick(2), value: pick(2), x: 520, y: 150, type: 'avl' },
           ],
-          edges: [[30, 20], [30, 40]],
+          edges: [[pick(0), pick(1)], [pick(0), pick(2)]],
         },
         {
-          caption: 'Insert 10. The left subtree grows too fast.',
-          message: 'Insert 10. The left subtree grows too fast.',
+          caption: `Insert ${pick(3)}. The left subtree grows too fast.`,
+          message: `Insert ${pick(3)}. The left subtree grows too fast.`,
           nodes: [
-            { id: 30, value: 30, x: 400, y: 50, type: 'avl' },
-            { id: 20, value: 20, x: 280, y: 150, type: 'avl' },
-            { id: 40, value: 40, x: 520, y: 150, type: 'avl' },
-            { id: 10, value: 10, x: 190, y: 245, active: true, type: 'avl' },
+            { id: pick(0), value: pick(0), x: 400, y: 50, type: 'avl' },
+            { id: pick(1), value: pick(1), x: 280, y: 150, type: 'avl' },
+            { id: pick(2), value: pick(2), x: 520, y: 150, type: 'avl' },
+            { id: pick(3), value: pick(3), x: 190, y: 245, active: true, type: 'avl' },
           ],
-          edges: [[30, 20], [30, 40], [20, 10]],
+          edges: [[pick(0), pick(1)], [pick(0), pick(2)], [pick(1), pick(3)]],
         },
         {
-          caption: 'Rotate right at 30 to restore AVL balance.',
-          message: 'Rotate right at 30 to restore AVL balance.',
+          caption: `Rotate right at ${pick(0)} to restore AVL balance.`,
+          message: `Rotate right at ${pick(0)} to restore AVL balance.`,
           nodes: [
-            { id: 20, value: 20, x: 400, y: 50, active: true, type: 'avl' },
-            { id: 10, value: 10, x: 280, y: 150, type: 'avl' },
-            { id: 30, value: 30, x: 520, y: 150, type: 'avl' },
-            { id: 25, value: 25, x: 460, y: 245, type: 'avl' },
-            { id: 40, value: 40, x: 620, y: 245, type: 'avl' },
+            { id: pick(1), value: pick(1), x: 400, y: 50, active: true, type: 'avl' },
+            { id: pick(3), value: pick(3), x: 280, y: 150, type: 'avl' },
+            { id: pick(0), value: pick(0), x: 520, y: 150, type: 'avl' },
+            { id: pick(4), value: pick(4), x: 460, y: 245, type: 'avl' },
+            { id: pick(2), value: pick(2), x: 620, y: 245, type: 'avl' },
           ],
-          edges: [[20, 10], [20, 30], [30, 25], [30, 40]],
+          edges: [[pick(1), pick(3)], [pick(1), pick(0)], [pick(0), pick(4)], [pick(0), pick(2)]],
         },
         {
-          caption: 'Insert 25, 35, 50. Height stays logarithmic.',
-          message: 'Insert 25, 35, 50. Height stays logarithmic.',
+          caption: `Insert ${pick(4)}, ${pick(5)}, ${pick(6)}. Height stays logarithmic.`,
+          message: `Insert ${pick(4)}, ${pick(5)}, ${pick(6)}. Height stays logarithmic.`,
           nodes: [
-            { id: 20, value: 20, x: 400, y: 50, type: 'avl' },
-            { id: 10, value: 10, x: 260, y: 145, type: 'avl' },
-            { id: 30, value: 30, x: 520, y: 145, type: 'avl' },
-            { id: 5, value: 5, x: 200, y: 245, active: true, type: 'avl' },
-            { id: 25, value: 25, x: 460, y: 245, type: 'avl' },
-            { id: 40, value: 40, x: 620, y: 245, type: 'avl' },
+            { id: pick(1), value: pick(1), x: 400, y: 50, type: 'avl' },
+            { id: pick(3), value: pick(3), x: 260, y: 145, type: 'avl' },
+            { id: pick(0), value: pick(0), x: 520, y: 145, type: 'avl' },
+            { id: pick(7), value: pick(7), x: 200, y: 245, active: true, type: 'avl' },
+            { id: pick(4), value: pick(4), x: 460, y: 245, type: 'avl' },
+            { id: pick(2), value: pick(2), x: 620, y: 245, type: 'avl' },
           ],
-          edges: [[20, 10], [20, 30], [10, 5], [30, 25], [30, 40]],
+          edges: [[pick(1), pick(3)], [pick(1), pick(0)], [pick(3), pick(7)], [pick(0), pick(4)], [pick(0), pick(2)]],
         },
       ]
     : [
         {
-          caption: 'Insert 30 as a black root node.',
-          message: 'Insert 30 as a black root node.',
+          caption: `Insert ${pick(0)} as a black root node.`,
+          message: `Insert ${pick(0)} as a black root node.`,
           nodes: [
-            { id: 30, value: 30, x: 400, y: 50, active: true, type: 'rb-black' },
+            { id: pick(0), value: pick(0), x: 400, y: 50, active: true, type: 'rb-black' },
           ],
           edges: [],
         },
         {
-          caption: 'Insert 20 and 40 as red children.',
-          message: 'Insert 20 and 40 as red children.',
+          caption: `Insert ${pick(1)} and ${pick(2)} as red children.`,
+          message: `Insert ${pick(1)} and ${pick(2)} as red children.`,
           nodes: [
-            { id: 30, value: 30, x: 400, y: 50, type: 'rb-black' },
-            { id: 20, value: 20, x: 280, y: 150, active: true, type: 'rb-red' },
-            { id: 40, value: 40, x: 520, y: 150, type: 'rb-red' },
+            { id: pick(0), value: pick(0), x: 400, y: 50, type: 'rb-black' },
+            { id: pick(1), value: pick(1), x: 280, y: 150, active: true, type: 'rb-red' },
+            { id: pick(2), value: pick(2), x: 520, y: 150, type: 'rb-red' },
           ],
-          edges: [[30, 20], [30, 40]],
+          edges: [[pick(0), pick(1)], [pick(0), pick(2)]],
         },
         {
-          caption: 'Insert 10. Recolor to preserve red-black rules.',
-          message: 'Insert 10. Recolor to preserve red-black rules.',
+          caption: `Insert ${pick(3)}. Recolor to preserve red-black rules.`,
+          message: `Insert ${pick(3)}. Recolor to preserve red-black rules.`,
           nodes: [
-            { id: 20, value: 20, x: 400, y: 50, active: true, type: 'rb-black' },
-            { id: 10, value: 10, x: 280, y: 150, type: 'rb-red' },
-            { id: 30, value: 30, x: 520, y: 150, type: 'rb-black' },
-            { id: 40, value: 40, x: 640, y: 245, type: 'rb-red' },
+            { id: pick(1), value: pick(1), x: 400, y: 50, active: true, type: 'rb-black' },
+            { id: pick(3), value: pick(3), x: 280, y: 150, type: 'rb-red' },
+            { id: pick(0), value: pick(0), x: 520, y: 150, type: 'rb-black' },
+            { id: pick(2), value: pick(2), x: 640, y: 245, type: 'rb-red' },
           ],
-          edges: [[20, 10], [20, 30], [30, 40]],
+          edges: [[pick(1), pick(3)], [pick(1), pick(0)], [pick(0), pick(2)]],
         },
         {
-          caption: 'Insert 25, 35, 50. Black height stays balanced.',
-          message: 'Insert 25, 35, 50. Black height stays balanced.',
+          caption: `Insert ${pick(4)}, ${pick(5)}, ${pick(6)}. Black height stays balanced.`,
+          message: `Insert ${pick(4)}, ${pick(5)}, ${pick(6)}. Black height stays balanced.`,
           nodes: [
-            { id: 20, value: 20, x: 400, y: 50, type: 'rb-black' },
-            { id: 10, value: 10, x: 260, y: 150, type: 'rb-black' },
-            { id: 30, value: 30, x: 540, y: 150, type: 'rb-black' },
-            { id: 5, value: 5, x: 180, y: 245, active: true, type: 'rb-red' },
-            { id: 25, value: 25, x: 470, y: 245, type: 'rb-red' },
-            { id: 50, value: 50, x: 650, y: 245, type: 'rb-red' },
+            { id: pick(1), value: pick(1), x: 400, y: 50, type: 'rb-black' },
+            { id: pick(3), value: pick(3), x: 260, y: 150, type: 'rb-black' },
+            { id: pick(0), value: pick(0), x: 540, y: 150, type: 'rb-black' },
+            { id: pick(7), value: pick(7), x: 180, y: 245, active: true, type: 'rb-red' },
+            { id: pick(4), value: pick(4), x: 470, y: 245, type: 'rb-red' },
+            { id: pick(6), value: pick(6), x: 650, y: 245, type: 'rb-red' },
           ],
-          edges: [[20, 10], [20, 30], [10, 5], [30, 25], [30, 50]],
+          edges: [[pick(1), pick(3)], [pick(1), pick(0)], [pick(3), pick(7)], [pick(0), pick(4)], [pick(0), pick(6)]],
         },
       ];
 
@@ -1914,7 +2129,7 @@ async function runTreeViz(algo) {
   addToHistory({
     category: 'tree',
     algo: algo === 'avl' ? 'AVL Tree' : 'Red-Black Tree',
-    input: values.join(', '),
+    input: getCustomInputRaw() || values.join(', '),
     result: 'Balanced tree rotations demonstrated',
     steps: stepCounter,
     time: Date.now(),
@@ -1932,10 +2147,7 @@ async function runTSPViz() {
   canvas.height = 320;
   State.vizRunning = true;
 
-  const cities = [
-    {x:100,y:100,l:'A'},{x:300,y:60,l:'B'},
-    {x:500,y:120,l:'C'},{x:400,y:260,l:'D'},{x:150,y:260,l:'E'}
-  ];
+  const cities = buildTspCities(getCustomTspCities());
   const n = cities.length;
   const cost = (a,b) => Math.round(Math.hypot(cities[a].x-cities[b].x, cities[a].y-cities[b].y)/10);
   const adj = Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:cost(i,j)));
@@ -1980,7 +2192,7 @@ async function runTSPViz() {
     });
   }
 
-  log('TSP Branch & Bound: 5 cities', 'highlight');
+  log(`TSP Branch & Bound: ${cities.length} cities`, 'highlight');
   let bestCost = Infinity, bestPath = [];
   const minEdge = Math.min(...adj.flat().filter(w => w > 0));
   const spd = () => Math.max(100, 600 / State.vizSpeed);
