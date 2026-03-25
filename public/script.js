@@ -2334,10 +2334,6 @@ function renderCompareSummary(results, cat, size) {
         <span class="pill-label">Best fit</span>
         <strong>${bestCandidate?.name || '—'}</strong>
       </div>
-      <div class="compare-summary-pill">
-        <span class="pill-label">Key takeaway</span>
-        <strong>${cat === 'failure' ? 'Watch for wrong assumptions' : 'Pick the algorithm that matches the problem'}</strong>
-      </div>
     </div>
     <p>${tradeoff}</p>
   `;
@@ -2568,41 +2564,10 @@ function renderCompareCharts(results, cat, size) {
     options:{...chartDefaults},
   });
 
-  // Growth chart
-  const growthBox = document.getElementById('growthChartBox');
-  growthBox.style.display='block';
-  const sizes=[5,10,20,50,100,200];
-  let datasets=[];
-  if(cat==='sorting'){
-    datasets=[
-      {label:'Quick Sort O(n log n)',data:sizes.map(n=>n*Math.log2(n)),borderColor:'#00e5ff',fill:false,tension:0.4},
-      {label:'Quick Sort Worst O(n²)',data:sizes.map(n=>n*n*0.01),borderColor:'#ef4444',fill:false,tension:0.4},
-      {label:'Merge Sort O(n log n)',data:sizes.map(n=>n*Math.log2(n)),borderColor:'#10b981',fill:false,tension:0.4},
-    ];
-  } else if(cat==='knapsack'){
-    const W=50;
-    datasets=[
-      {label:'DP O(nW)',data:sizes.map(n=>n*W),borderColor:'#10b981',fill:false,tension:0.4},
-      {label:'Greedy O(n log n)',data:sizes.map(n=>n*Math.log2(n)),borderColor:'#00e5ff',fill:false,tension:0.4},
-      {label:'Backtracking O(2ⁿ)',data:sizes.map(n=>Math.pow(2,Math.min(n,20))*0.0001),borderColor:'#ef4444',fill:false,tension:0.4},
-    ];
-  } else {
-    datasets=[
-      {label:'BFS O(V+E)',data:sizes.map(n=>n*1.5),borderColor:'#00e5ff',fill:false,tension:0.4},
-      {label:"Dijkstra O(V² or (V+E)logV)",data:sizes.map(n=>n*n),borderColor:'#7c3aed',fill:false,tension:0.4},
-      {label:'Floyd-Warshall O(V³)',data:sizes.map(n=>Math.pow(n,3)*0.01),borderColor:'#ef4444',fill:false,tension:0.4},
-    ];
+  if (growthChart) {
+    growthChart.destroy();
+    growthChart = null;
   }
-
-  if(growthChart) growthChart.destroy();
-  growthChart = new Chart(document.getElementById('growthChart'), {
-    type:'line',
-    data:{labels:sizes,datasets},
-    options:{
-      ...chartDefaults,
-      plugins:{...chartDefaults.plugins,legend:{...chartDefaults.plugins.legend,display:true}},
-    },
-  });
 }
 
 function saveLastComparison() {
