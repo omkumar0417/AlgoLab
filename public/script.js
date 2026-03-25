@@ -193,6 +193,7 @@ function deletePreset(id) {
   State.presets = State.presets.filter(item => item.id !== id);
   persistPresets();
   renderPresets();
+  renderProfileDashboard();
   showToast('Preset deleted', 'success');
 }
 
@@ -218,6 +219,7 @@ function saveCurrentPreset() {
   State.presets = State.presets.slice(0, 8);
   persistPresets();
   renderPresets();
+  renderProfileDashboard();
   showToast('Preset saved', 'success');
 }
 
@@ -274,6 +276,139 @@ async function loadAnalytics() {
     document.getElementById('analyticsAlgorithms').textContent = err.message || 'Could not load analytics.';
     document.getElementById('analyticsTypes').textContent = 'Try again after more runs are saved.';
   }
+}
+
+async function loadUserProfile() {
+  if (!State.auth.token) {
+    State.profile = null;
+    renderProfileDashboard();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data?.user) {
+      State.profile = data.user;
+      renderProfileDashboard();
+    }
+  } catch {}
+}
+
+function renderProfileChart(categoryCounts) {
+  const canvas = document.getElementById('profileProgressChart');
+  if (!canvas) return;
+
+  if (State.charts.profileProgress) State.charts.profileProgress.destroy();
+
+  const labels = Object.keys(categoryCounts);
+  const values = Object.values(categoryCounts);
+  State.charts.profileProgress = new Chart(canvas, {
+    type: labels.length ? 'doughnut' : 'bar',
+    data: {
+      labels: labels.length ? labels : ['No Activity Yet'],
+      datasets: [{
+        data: values.length ? values : [1],
+        backgroundColor: ['#00e5ff', '#7c3aed', '#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#14b8a6'],
+        borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
+      },
+    },
+  });
+}
+
+function renderProfileDashboard() {
+  const profileName = document.getElementById('profileName');
+  if (!profileName) return;
+
+  if (!State.auth.token) {
+    document.getElementById('profileAvatar').textContent = 'G';
+    profileName.textContent = 'Guest User';
+    document.getElementById('profileMeta').textContent = 'Login to unlock your personal dashboard.';
+    document.getElementById('profileRole').textContent = 'Guest';
+    document.getElementById('profileRuns').textContent = '0';
+    document.getElementById('profileFavoriteAlgo').textContent = '—';
+    document.getElementById('profileParadigms').textContent = '0';
+    document.getElementById('profilePresetCount').textContent = '0';
+    document.getElementById('profileRecentWork').textContent = 'No recent work yet.';
+    document.getElementById('profileSavedPresets').textContent = 'No presets saved yet.';
+    document.getElementById('profileProgressList').textContent = 'Try algorithms after login to build progress.';
+    document.getElementById('profileAchievements').textContent = 'Achievements unlock as you explore the lab.';
+    document.getElementById('profileRecommendations').textContent = 'Personal suggestions appear after a few runs.';
+    document.getElementById('profileAdminStatus').textContent = 'No admin access for this account.';
+    renderProfileChart({});
+    return;
+  }
+
+  const user = State.profile || { userId: State.auth.userId, isAdmin: State.auth.isAdmin };
+  const runs = State.history.length;
+  const algoCounts = State.history.reduce((acc, item) => {
+    acc[item.algo] = (acc[item.algo] || 0) + 1;
+    return acc;
+  }, {});
+  const categoryCounts = State.history.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + 1;
+    return acc;
+  }, {});
+  const favoriteAlgo = Object.entries(algoCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  const paradigms = [...new Set(State.history.map(item => getAlgorithmParadigm(item.algo)))];
+  const presetCount = State.presets.length;
+  const recentWork = State.history.slice(0, 4);
+  const coveredCategories = Object.keys(categoryCounts);
+  const achievements = [];
+
+  if (runs >= 1) achievements.push('First run completed');
+  if (runs >= 5) achievements.push('Momentum builder');
+  if (runs >= 15) achievements.push('Power explorer');
+  if (paradigms.length >= 3) achievements.push('Paradigm hopper');
+  if (State.history.some(item => item.comparison)) achievements.push('Comparison analyst');
+  if (presetCount >= 3) achievements.push('Preset planner');
+
+  const allCategories = ['sorting', 'graph', 'knapsack', 'string', 'compression', 'tree', 'search'];
+  const missingCategories = allCategories.filter(item => !coveredCategories.includes(item));
+  const recommendations = [];
+  if (missingCategories.includes('graph')) recommendations.push('Try Bellman-Ford or Prim to broaden your graph toolkit.');
+  if (missingCategories.includes('string')) recommendations.push('Run KMP after Rabin-Karp to compare linear string matching strategies.');
+  if (missingCategories.includes('compression')) recommendations.push('Explore Huffman Coding to add a greedy compression example.');
+  if (!recommendations.length) recommendations.push('You have broad coverage already. Save more comparisons to deepen your insights.');
+
+  document.getElementById('profileAvatar').textContent = String(user.userId || 'U').charAt(0).toUpperCase();
+  profileName.textContent = user.userId || State.auth.userId;
+  document.getElementById('profileMeta').textContent = `Joined ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'recently'} • Last login ${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'this session'} • Session ${State.auth.expiresAt ? `active until ${new Date(State.auth.expiresAt).toLocaleString()}` : 'active'}`;
+  document.getElementById('profileRole').textContent = user.isAdmin ? 'Admin' : 'Student';
+  document.getElementById('profileRuns').textContent = String(runs);
+  document.getElementById('profileFavoriteAlgo').textContent = favoriteAlgo;
+  document.getElementById('profileParadigms').textContent = String(paradigms.length);
+  document.getElementById('profilePresetCount').textContent = String(presetCount);
+
+  document.getElementById('profileRecentWork').innerHTML = recentWork.length
+    ? recentWork.map(item => `<div class="profile-item"><strong>${item.algo}</strong><span>${item.category}</span></div>`).join('')
+    : 'No saved runs yet.';
+  document.getElementById('profileSavedPresets').innerHTML = State.presets.length
+    ? State.presets.slice(0, 4).map(item => `<div class="profile-item"><strong>${item.name}</strong><span>${item.algoLabel}</span></div>`).join('')
+    : 'No presets saved yet.';
+  document.getElementById('profileProgressList').innerHTML = coveredCategories.length
+    ? coveredCategories.map(cat => `<div class="profile-item"><strong>${cat}</strong><span>${categoryCounts[cat]} runs</span></div>`).join('')
+    : 'Try a few categories to build progress.';
+  document.getElementById('profileAchievements').innerHTML = achievements.length
+    ? achievements.map(item => `<span class="achievement-chip">${item}</span>`).join('')
+    : 'Achievements unlock as you explore the lab.';
+  document.getElementById('profileRecommendations').innerHTML = recommendations
+    .map(item => `<div class="profile-item"><strong>Next Step</strong><span>${item}</span></div>`).join('');
+  document.getElementById('profileAdminStatus').innerHTML = user.isAdmin
+    ? `<div class="admin-highlight">Admin access enabled. You can review platform-wide usage from the Analytics tab.</div>`
+    : 'No admin access for this account.';
+
+  renderProfileChart(categoryCounts);
 }
 
 function getComparisonInsight(results, cat, size) {
@@ -2116,6 +2251,7 @@ async function addToHistory(entry) {
     State.history.unshift(data.entry);
     if (State.history.length > 100) State.history.pop();
     renderHistory();
+    renderProfileDashboard();
     showToast('Saved to your account history', 'success');
   } catch (err) {
     showToast(err.message || 'Could not save history', 'error');
@@ -2210,6 +2346,7 @@ async function deleteHistory(id) {
 
     State.history = State.history.filter(h => String(h._id || h.id) !== String(id));
     renderHistory();
+    renderProfileDashboard();
     showToast('History item deleted', 'success');
   } catch (err) {
     showToast(err.message || 'Could not delete history', 'error');
@@ -2231,6 +2368,7 @@ function initHistory() {
         if (!res.ok || !data.deleted) throw new Error(data.message || 'Could not clear history');
         State.history = [];
         renderHistory();
+        renderProfileDashboard();
         showToast('All history cleared', 'success');
       } catch (err) {
         showToast(err.message || 'Could not clear history', 'error');
@@ -2266,6 +2404,8 @@ function setAuth(token, userId, expiresAt = '', isAdmin = false) {
   updateAuthUI();
   apiHistory();
   loadAnalytics();
+  loadUserProfile();
+  renderProfileDashboard();
 }
 
 function clearAuth() {
@@ -2274,6 +2414,7 @@ function clearAuth() {
   State.auth.expiresAt = '';
   State.auth.isAdmin = false;
   State.history = [];
+  State.profile = null;
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
   localStorage.removeItem('algolab_expires_at');
@@ -2283,6 +2424,7 @@ function clearAuth() {
   updateAuthUI();
   renderHistory();
   loadAnalytics();
+  renderProfileDashboard();
 }
 
 function updateAuthUI() {
@@ -2290,6 +2432,8 @@ function updateAuthUI() {
   if (navAuth) navAuth.textContent = State.auth.userId ? `User: ${State.auth.userId}` : 'Guest';
   const analyticsLink = document.querySelector('[data-page="analytics"]');
   if (analyticsLink) analyticsLink.parentElement.style.display = State.auth.isAdmin ? '' : 'none';
+  const profileLink = document.querySelector('[data-page="profile"]');
+  if (profileLink) profileLink.parentElement.style.display = State.auth.token ? '' : 'none';
 
   const authStatus = document.getElementById('authStatus');
   if (authStatus) {
@@ -2407,6 +2551,76 @@ function initAuth() {
   updateAuthUI();
 }
 
+function initProfile() {
+  document.getElementById('btnContinueLastRun')?.addEventListener('click', () => {
+    if (!requireLogin('Login to continue your work')) return;
+    const last = State.history[0];
+    if (!last) return showToast('No previous run found', 'error');
+    rerunHistory(String(last._id || last.id));
+  });
+
+  document.getElementById('btnOpenFavoriteAlgo')?.addEventListener('click', () => {
+    if (!requireLogin('Login to use quick actions')) return;
+    const counts = State.history.reduce((acc, item) => {
+      acc[item.algo] = (acc[item.algo] || 0) + 1;
+      return acc;
+    }, {});
+    const favorite = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (!favorite) return showToast('No favorite algorithm yet', 'error');
+    rerunHistory(String(State.history.find(item => item.algo === favorite)?._id || State.history.find(item => item.algo === favorite)?.id || ''));
+  });
+
+  document.getElementById('btnNewComparison')?.addEventListener('click', () => {
+    navigateTo('compare');
+  });
+
+  document.getElementById('btnExportMyHistory')?.addEventListener('click', () => {
+    document.getElementById('btnExportHistory')?.click();
+  });
+
+  document.getElementById('btnProfileChangePassword')?.addEventListener('click', async () => {
+    if (!requireLogin('Login to change your password')) return;
+    const password = document.getElementById('profileNewPassword').value.trim();
+    const confirmPassword = document.getElementById('profileConfirmPassword').value.trim();
+    if (!password) return showToast('Enter a new password', 'error');
+    if (password !== confirmPassword) return showToast('Passwords do not match', 'error');
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: State.auth.userId, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Password update failed');
+      document.getElementById('profileNewPassword').value = '';
+      document.getElementById('profileConfirmPassword').value = '';
+      showToast('Password updated', 'success');
+    } catch (err) {
+      showToast(err.message || 'Password update failed', 'error');
+    }
+  });
+
+  document.getElementById('btnClearMyPresets')?.addEventListener('click', () => {
+    if (!requireLogin('Login to clear presets')) return;
+    State.presets = [];
+    persistPresets();
+    renderPresets();
+    renderProfileDashboard();
+    showToast('Saved presets cleared', 'success');
+  });
+
+  document.getElementById('btnResetMyHistory')?.addEventListener('click', () => {
+    document.getElementById('btnClearHistory')?.click();
+  });
+
+  document.getElementById('btnProfileLogout')?.addEventListener('click', () => {
+    clearAuth();
+    showToast('Logged out', 'success');
+    navigateTo('auth');
+  });
+}
+
 // ============================================================
 // TOAST & LOADER
 // ============================================================
@@ -2479,6 +2693,7 @@ async function apiHistory() {
       if(data.history) {
         State.history = data.history;
         renderHistory();
+        renderProfileDashboard();
       }
     }
   } catch {}
@@ -2495,12 +2710,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initSuggest();
   initHistory();
   initAuth();
+  initProfile();
   updateHistorySummary();
   validateSession();
+  renderProfileDashboard();
 
   // Try to load history from API (non-blocking)
   apiHistory();
   loadAnalytics();
+  loadUserProfile();
 
   // Chart.js global defaults
   Chart.defaults.color = '#8892b0';
