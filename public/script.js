@@ -2628,16 +2628,18 @@ function updateHeroWelcome() {
 }
 
 function initAuth() {
-  const tabs = document.querySelectorAll('.auth-tab');
+  const tabs = document.querySelectorAll('.auth-tab, .auth-inline-link[data-auth-tab]');
   const loginForm = document.getElementById('loginForm');
   const signupForm = document.getElementById('signupForm');
   const resetForm = document.getElementById('resetForm');
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
       const target = tab.dataset.authTab;
+      if (!target) return;
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll(`.auth-tab[data-auth-tab="${target}"]`).forEach(btn => btn.classList.add('active'));
+      if (tab.classList.contains('auth-inline-link')) tab.classList.add('active');
       if (loginForm) loginForm.classList.toggle('active', target === 'login');
       if (signupForm) signupForm.classList.toggle('active', target === 'signup');
       if (resetForm) resetForm.classList.toggle('active', target === 'reset');

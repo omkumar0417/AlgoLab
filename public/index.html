@@ -698,45 +698,63 @@
 
   <div class="auth-layout">
     <div class="auth-card glass-panel">
-      <div class="auth-preface">
+      <div class="auth-hero">
         <div class="auth-preface-label">Secure Access</div>
-        <p>Atlas-backed accounts, hashed passwords, and personalized progress tracking.</p>
+        <h3>Access your personal AlgoLab workspace</h3>
+        <p>Sign in to save history, keep your display name, unlock your profile dashboard, and run protected tools.</p>
+        <div class="auth-mini-stats">
+          <div class="auth-mini-stat"><strong>Atlas</strong><span>MongoDB backed</span></div>
+          <div class="auth-mini-stat"><strong>JWT</strong><span>Session auth</span></div>
+          <div class="auth-mini-stat"><strong>Profile</strong><span>Personalized</span></div>
+        </div>
       </div>
+
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-tab="login">Login</button>
         <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
         <button class="auth-tab" data-auth-tab="reset">Reset</button>
       </div>
 
-      <form id="loginForm" class="auth-form active">
-        <label>User ID</label>
-        <input type="text" class="glass-input" id="loginUserId" placeholder="your_id" />
-        <label>Password</label>
-        <input type="password" class="glass-input" id="loginPassword" placeholder="••••••••" />
-        <button class="btn-primary" type="submit">Login</button>
-      </form>
+      <div class="auth-panel">
+        <form id="loginForm" class="auth-form active">
+          <label>User ID</label>
+          <input type="text" class="glass-input" id="loginUserId" placeholder="your_id" autocomplete="username" />
+          <label>Password</label>
+          <input type="password" class="glass-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+          <button class="btn-primary auth-submit" type="submit">Login</button>
+          <div class="auth-footnote">New here? Switch to <span data-auth-tab="signup" class="auth-inline-link">Sign Up</span>.</div>
+        </form>
 
-      <form id="signupForm" class="auth-form">
-        <label>User ID</label>
-        <input type="text" class="glass-input" id="signupUserId" placeholder="your_id" />
-        <label>Display Name</label>
-        <input type="text" class="glass-input" id="signupDisplayName" placeholder="how we should greet you" />
-        <label>Password</label>
-        <input type="password" class="glass-input" id="signupPassword" placeholder="min 6 characters" />
-        <label>Confirm Password</label>
-        <input type="password" class="glass-input" id="signupConfirmPassword" placeholder="repeat password" />
-        <button class="btn-primary" type="submit">Create Account</button>
-      </form>
+        <form id="signupForm" class="auth-form">
+          <div class="auth-grid-2">
+            <div>
+              <label>User ID</label>
+              <input type="text" class="glass-input" id="signupUserId" placeholder="your_id" autocomplete="username" />
+            </div>
+            <div>
+              <label>Display Name</label>
+              <input type="text" class="glass-input" id="signupDisplayName" placeholder="how we should greet you" autocomplete="nickname" />
+            </div>
+          </div>
+          <label>Password</label>
+          <input type="password" class="glass-input" id="signupPassword" placeholder="min 6 characters" autocomplete="new-password" />
+          <label>Confirm Password</label>
+          <input type="password" class="glass-input" id="signupConfirmPassword" placeholder="repeat password" autocomplete="new-password" />
+          <button class="btn-primary auth-submit" type="submit">Create Account</button>
+          <div class="auth-footnote">Already have an account? Switch to <span data-auth-tab="login" class="auth-inline-link">Login</span>.</div>
+        </form>
 
-      <form id="resetForm" class="auth-form">
-        <label>User ID</label>
-        <input type="text" class="glass-input" id="resetUserId" placeholder="your_id" />
-        <label>New Password</label>
-        <input type="password" class="glass-input" id="resetPassword" placeholder="new password" />
-        <label>Confirm New Password</label>
-        <input type="password" class="glass-input" id="resetConfirmPassword" placeholder="repeat new password" />
-        <button class="btn-primary" type="submit">Reset Password</button>
-      </form>
+        <form id="resetForm" class="auth-form">
+          <label>User ID</label>
+          <input type="text" class="glass-input" id="resetUserId" placeholder="your_id" autocomplete="username" />
+          <label>New Password</label>
+          <input type="password" class="glass-input" id="resetPassword" placeholder="new password" autocomplete="new-password" />
+          <label>Confirm New Password</label>
+          <input type="password" class="glass-input" id="resetConfirmPassword" placeholder="repeat new password" autocomplete="new-password" />
+          <button class="btn-primary auth-submit" type="submit">Reset Password</button>
+          <div class="auth-footnote">Remember your password? Switch to <span data-auth-tab="login" class="auth-inline-link">Login</span>.</div>
+        </form>
+      </div>
 
       <div class="auth-actions">
         <button class="btn-ghost" id="btnLogout" type="button">Logout</button>
@@ -745,20 +763,20 @@
     </div>
 
     <div class="auth-info glass-panel">
-      <h3>How it works</h3>
-      <p>Your login is stored in MongoDB Atlas (free tier). Passwords are hashed before saving.</p>
+      <h3>Why login matters</h3>
+      <p>Once you sign in, AlgoLab starts feeling personal — your display name, your history, your presets, and your progress stay connected to your account.</p>
       <div class="auth-security-list">
         <div class="security-item">
-          <span class="security-kicker">Atlas</span>
-          <strong>Cloud-backed storage</strong>
+          <span class="security-kicker">Personal</span>
+          <strong>Save runs, comparisons, and presets to your account</strong>
         </div>
         <div class="security-item">
-          <span class="security-kicker">Hashing</span>
-          <strong>Passwords are never stored in plain text</strong>
+          <span class="security-kicker">Secure</span>
+          <strong>Hashed passwords and JWT sessions keep access controlled</strong>
         </div>
         <div class="security-item">
-          <span class="security-kicker">Profile</span>
-          <strong>Display name, history, and dashboards stay personal</strong>
+          <span class="security-kicker">Admin</span>
+          <strong>Admin users can review platform activity and usage trends</strong>
         </div>
       </div>
       <div class="auth-note">Tip: Set <span class="mono">JWT_SECRET</span> in .env when deploying.</div>
