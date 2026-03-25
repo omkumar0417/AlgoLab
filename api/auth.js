@@ -7,7 +7,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { connectDB } = require('../db');
-const { requireAuth } = require('./middleware/auth');
+const { requireAuth, isAdminUser } = require('./middleware/auth');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
       { userId },
       { $set: { lastLoginAt: new Date() } }
     );
-    return res.json({ success: true, token, userId, expiresAt: getExpiryDate(token) });
+    return res.json({ success: true, token, userId, expiresAt: getExpiryDate(token), isAdmin: isAdminUser(userId) });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'login failed' });
   }
@@ -132,7 +132,7 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'user not found' });
     }
 
-    return res.json({ success: true, user });
+    return res.json({ success: true, user: { ...user, isAdmin: isAdminUser(user.userId) } });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'session check failed' });
   }

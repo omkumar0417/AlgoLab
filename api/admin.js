@@ -1,10 +1,10 @@
 const express = require('express');
 const { connectDB } = require('../db');
-const { requireAuth } = require('./middleware/auth');
+const { requireAuth, requireAdmin } = require('./middleware/auth');
 
 const router = express.Router();
 
-router.get('/stats', requireAuth, async (req, res) => {
+router.get('/stats', requireAuth, requireAdmin, async (req, res) => {
   try {
     const db = await connectDB();
     if (!db) return res.status(500).json({ success: false, message: 'database not configured' });

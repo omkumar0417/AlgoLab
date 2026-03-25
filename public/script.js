@@ -26,6 +26,7 @@ const State = {
     token: localStorage.getItem('algolab_token') || '',
     userId: localStorage.getItem('algolab_user') || '',
     expiresAt: localStorage.getItem('algolab_expires_at') || '',
+    isAdmin: localStorage.getItem('algolab_is_admin') === 'true',
   },
 };
 
@@ -33,6 +34,11 @@ const State = {
 // NAVIGATION
 // ============================================================
 function navigateTo(page, param) {
+  if (page === 'analytics' && !State.auth.isAdmin) {
+    showToast('Admin access required', 'error');
+    page = State.auth.token ? 'history' : 'auth';
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
@@ -95,7 +101,9 @@ async function validateSession() {
     const data = await res.json();
     if (data?.user?.userId) {
       State.auth.userId = data.user.userId;
+      State.auth.isAdmin = !!data.user.isAdmin;
       localStorage.setItem('algolab_user', data.user.userId);
+      localStorage.setItem('algolab_is_admin', String(State.auth.isAdmin));
       updateAuthUI();
     }
   } catch {
@@ -211,9 +219,9 @@ function updateHistorySummary() {
 }
 
 async function loadAnalytics() {
-  if (!State.auth.token) {
-    document.getElementById('analyticsAlgorithms').textContent = 'Login to load analytics.';
-    document.getElementById('analyticsTypes').textContent = 'Login to load analytics.';
+  if (!State.auth.token || !State.auth.isAdmin) {
+    document.getElementById('analyticsAlgorithms').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
+    document.getElementById('analyticsTypes').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     return;
   }
 
@@ -2217,13 +2225,15 @@ function initHistory() {
 // ============================================================
 // AUTH (LOGIN / SIGNUP)
 // ============================================================
-function setAuth(token, userId, expiresAt = '') {
+function setAuth(token, userId, expiresAt = '', isAdmin = false) {
   State.auth.token = token || '';
   State.auth.userId = userId || '';
   State.auth.expiresAt = expiresAt || '';
+  State.auth.isAdmin = !!isAdmin;
   localStorage.setItem('algolab_token', State.auth.token);
   localStorage.setItem('algolab_user', State.auth.userId);
   localStorage.setItem('algolab_expires_at', State.auth.expiresAt);
+  localStorage.setItem('algolab_is_admin', String(State.auth.isAdmin));
   loadPresets();
   renderPresets();
   updateAuthUI();
@@ -2235,10 +2245,12 @@ function clearAuth() {
   State.auth.token = '';
   State.auth.userId = '';
   State.auth.expiresAt = '';
+  State.auth.isAdmin = false;
   State.history = [];
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
   localStorage.removeItem('algolab_expires_at');
+  localStorage.removeItem('algolab_is_admin');
   loadPresets();
   renderPresets();
   updateAuthUI();
@@ -2249,11 +2261,13 @@ function clearAuth() {
 function updateAuthUI() {
   const navAuth = document.getElementById('navAuth');
   if (navAuth) navAuth.textContent = State.auth.userId ? `User: ${State.auth.userId}` : 'Guest';
+  const analyticsLink = document.querySelector('[data-page="analytics"]');
+  if (analyticsLink) analyticsLink.parentElement.style.display = State.auth.isAdmin ? '' : 'none';
 
   const authStatus = document.getElementById('authStatus');
   if (authStatus) {
     authStatus.textContent = State.auth.userId
-      ? `Logged in as ${State.auth.userId}${State.auth.expiresAt ? ` • session until ${new Date(State.auth.expiresAt).toLocaleString()}` : ''}`
+      ? `Logged in as ${State.auth.userId}${State.auth.isAdmin ? ' • admin' : ''}${State.auth.expiresAt ? ` • session until ${new Date(State.auth.expiresAt).toLocaleString()}` : ''}`
       : 'Not logged in';
   }
 
@@ -2293,7 +2307,7 @@ function initAuth() {
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
-        setAuth(data.token, data.userId, data.expiresAt);
+        setAuth(data.token, data.userId, data.expiresAt, data.isAdmin);
         showToast('Login successful!', 'success');
         navigateTo('history');
       } catch (err) {
