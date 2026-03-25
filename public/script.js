@@ -295,6 +295,7 @@ function renderAnalyticsActivityChart(rows) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
       },
@@ -324,6 +325,7 @@ function renderAnalyticsMixChart(stats) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
       },
@@ -353,6 +355,7 @@ function renderAnalyticsSignupChart(rows) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
       },
@@ -926,7 +929,7 @@ function startViz() {
 }
 
 function hideAllViz() {
-  ['sortViz','graphCanvas','dpViz','nqueensViz','rkViz'].forEach(id => {
+  ['sortViz','graphCanvas','dpViz','treeViz','nqueensViz','rkViz'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
 }
@@ -1752,36 +1755,158 @@ async function runHuffmanViz() {
 // BALANCED TREE VISUALIZER
 // ============================================================
 async function runTreeViz(algo) {
-  const dpDiv = document.getElementById('dpViz');
-  dpDiv.classList.remove('hidden');
-  const wrap = document.getElementById('dpTableWrap');
+  const treeDiv = document.getElementById('treeViz');
+  const treeSvg = document.getElementById('treeSvg');
+  const treeCaption = document.getElementById('treeCaption');
+  treeDiv.classList.remove('hidden');
+  const spd = () => Math.max(150, 650 / State.vizSpeed);
   const values = [30, 20, 40, 10, 25, 35, 50, 5];
-  const spd = () => Math.max(140, 550 / State.vizSpeed);
-  const states = [];
 
-  if (algo === 'avl') {
-    states.push('Insert 30, 20, 40');
-    states.push('Insert 10 -> tree becomes left-heavy');
-    states.push('Rotate right at 30 to restore AVL balance');
-    states.push('Insert 25, 35, 50');
-    states.push('Insert 5 -> balance factors remain in [-1, 1]');
-  } else {
-    states.push('Insert 30 as black root');
-    states.push('Insert 20 as red child');
-    states.push('Insert 40 as red child');
-    states.push('Insert 10 -> recolor and rotate to maintain red-black rules');
-    states.push('Insert 25, 35, 50 -> black height stays balanced');
+  const frames = algo === 'avl'
+    ? [
+        {
+          caption: 'Insert 30 as the root node.',
+          message: 'Insert 30 as the root.',
+          nodes: [
+            { id: 30, value: 30, x: 400, y: 50, active: true, type: 'avl' },
+          ],
+          edges: [],
+        },
+        {
+          caption: 'Insert 20 and 40. The tree is still balanced.',
+          message: 'Insert 20 and 40. The tree is still balanced.',
+          nodes: [
+            { id: 30, value: 30, x: 400, y: 50, type: 'avl' },
+            { id: 20, value: 20, x: 280, y: 150, active: true, type: 'avl' },
+            { id: 40, value: 40, x: 520, y: 150, type: 'avl' },
+          ],
+          edges: [[30, 20], [30, 40]],
+        },
+        {
+          caption: 'Insert 10. The left subtree grows too fast.',
+          message: 'Insert 10. The left subtree grows too fast.',
+          nodes: [
+            { id: 30, value: 30, x: 400, y: 50, type: 'avl' },
+            { id: 20, value: 20, x: 280, y: 150, type: 'avl' },
+            { id: 40, value: 40, x: 520, y: 150, type: 'avl' },
+            { id: 10, value: 10, x: 190, y: 245, active: true, type: 'avl' },
+          ],
+          edges: [[30, 20], [30, 40], [20, 10]],
+        },
+        {
+          caption: 'Rotate right at 30 to restore AVL balance.',
+          message: 'Rotate right at 30 to restore AVL balance.',
+          nodes: [
+            { id: 20, value: 20, x: 400, y: 50, active: true, type: 'avl' },
+            { id: 10, value: 10, x: 280, y: 150, type: 'avl' },
+            { id: 30, value: 30, x: 520, y: 150, type: 'avl' },
+            { id: 25, value: 25, x: 460, y: 245, type: 'avl' },
+            { id: 40, value: 40, x: 620, y: 245, type: 'avl' },
+          ],
+          edges: [[20, 10], [20, 30], [30, 25], [30, 40]],
+        },
+        {
+          caption: 'Insert 25, 35, 50. Height stays logarithmic.',
+          message: 'Insert 25, 35, 50. Height stays logarithmic.',
+          nodes: [
+            { id: 20, value: 20, x: 400, y: 50, type: 'avl' },
+            { id: 10, value: 10, x: 260, y: 145, type: 'avl' },
+            { id: 30, value: 30, x: 520, y: 145, type: 'avl' },
+            { id: 5, value: 5, x: 200, y: 245, active: true, type: 'avl' },
+            { id: 25, value: 25, x: 460, y: 245, type: 'avl' },
+            { id: 40, value: 40, x: 620, y: 245, type: 'avl' },
+          ],
+          edges: [[20, 10], [20, 30], [10, 5], [30, 25], [30, 40]],
+        },
+      ]
+    : [
+        {
+          caption: 'Insert 30 as a black root node.',
+          message: 'Insert 30 as a black root node.',
+          nodes: [
+            { id: 30, value: 30, x: 400, y: 50, active: true, type: 'rb-black' },
+          ],
+          edges: [],
+        },
+        {
+          caption: 'Insert 20 and 40 as red children.',
+          message: 'Insert 20 and 40 as red children.',
+          nodes: [
+            { id: 30, value: 30, x: 400, y: 50, type: 'rb-black' },
+            { id: 20, value: 20, x: 280, y: 150, active: true, type: 'rb-red' },
+            { id: 40, value: 40, x: 520, y: 150, type: 'rb-red' },
+          ],
+          edges: [[30, 20], [30, 40]],
+        },
+        {
+          caption: 'Insert 10. Recolor to preserve red-black rules.',
+          message: 'Insert 10. Recolor to preserve red-black rules.',
+          nodes: [
+            { id: 20, value: 20, x: 400, y: 50, active: true, type: 'rb-black' },
+            { id: 10, value: 10, x: 280, y: 150, type: 'rb-red' },
+            { id: 30, value: 30, x: 520, y: 150, type: 'rb-black' },
+            { id: 40, value: 40, x: 640, y: 245, type: 'rb-red' },
+          ],
+          edges: [[20, 10], [20, 30], [30, 40]],
+        },
+        {
+          caption: 'Insert 25, 35, 50. Black height stays balanced.',
+          message: 'Insert 25, 35, 50. Black height stays balanced.',
+          nodes: [
+            { id: 20, value: 20, x: 400, y: 50, type: 'rb-black' },
+            { id: 10, value: 10, x: 260, y: 150, type: 'rb-black' },
+            { id: 30, value: 30, x: 540, y: 150, type: 'rb-black' },
+            { id: 5, value: 5, x: 180, y: 245, active: true, type: 'rb-red' },
+            { id: 25, value: 25, x: 470, y: 245, type: 'rb-red' },
+            { id: 50, value: 50, x: 650, y: 245, type: 'rb-red' },
+          ],
+          edges: [[20, 10], [20, 30], [10, 5], [30, 25], [30, 50]],
+        },
+      ];
+
+  function drawTree(frame) {
+    const NS = 'http://www.w3.org/2000/svg';
+    treeSvg.innerHTML = '';
+    treeSvg.setAttribute('viewBox', '0 0 800 320');
+
+    frame.edges.forEach(([from, to]) => {
+      const a = frame.nodes.find(n => n.id === from);
+      const b = frame.nodes.find(n => n.id === to);
+      if (!a || !b) return;
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', a.x);
+      line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x);
+      line.setAttribute('y2', b.y);
+      line.setAttribute('class', 'tree-edge');
+      treeSvg.appendChild(line);
+    });
+
+    frame.nodes.forEach(node => {
+      const group = document.createElementNS(NS, 'g');
+      group.setAttribute('class', `tree-node ${node.type} ${node.active ? 'active' : ''}`);
+      group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+
+      const circle = document.createElementNS(NS, 'circle');
+      circle.setAttribute('r', '25');
+      group.appendChild(circle);
+
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('class', 'tree-label');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dy', '6');
+      text.textContent = node.value;
+      group.appendChild(text);
+
+      treeSvg.appendChild(group);
+    });
   }
 
   log(`${algo === 'avl' ? 'AVL Tree' : 'Red-Black Tree'} inserts: ${values.join(', ')}`, 'highlight');
-  for (let idx = 0; idx < states.length; idx++) {
-    wrap.innerHTML = `
-      <table>
-        <tr><th>Step</th><th>State</th></tr>
-        ${states.map((state, i) => `<tr><td>${i + 1}</td><td class="${i === idx ? 'dp-active' : i < idx ? 'dp-filled' : ''}">${state}</td></tr>`).join('')}
-      </table>
-    `;
-    log(states[idx]);
+  for (const frame of frames) {
+    drawTree(frame);
+    treeCaption.textContent = frame.caption;
+    log(frame.message);
     await delay(spd());
   }
   log(`✓ ${algo === 'avl' ? 'AVL' : 'Red-Black'} balancing demo complete.`, 'success');
