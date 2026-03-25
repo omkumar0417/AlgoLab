@@ -383,10 +383,10 @@ body::before {
 .hero {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: center;
   gap: 4rem;
-  padding: 6rem 5vw 4rem;
+  padding: 7rem 5vw 4rem;
   position: relative;
   overflow: hidden;
 }
@@ -462,9 +462,9 @@ body::before {
 
 .hero-sub {
   color: var(--text-secondary);
-  font-size: 0.95rem;
-  line-height: 1.8;
-  max-width: 520px;
+  font-size: 1rem;
+  line-height: 1.85;
+  max-width: 620px;
   margin-bottom: 2rem;
   animation: fadeIn 1s 0.5s ease forwards;
   opacity: 0;
@@ -479,10 +479,32 @@ body::before {
   opacity: 0;
 }
 
+.hero-chips {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 1.35rem;
+  animation: fadeIn 1s 0.7s ease forwards;
+  opacity: 0;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  background: rgba(0, 229, 255, 0.05);
+  color: var(--text-secondary);
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
 .hero-stats {
   display: flex;
   gap: 2.5rem;
-  margin-top: 3rem;
+  margin-top: 2.2rem;
   animation: fadeIn 1s 0.8s ease forwards;
   opacity: 0;
 }
@@ -503,9 +525,10 @@ body::before {
 /* ALGO CARD STACK */
 .algo-card-stack {
   position: relative;
-  height: 280px;
+  height: 340px;
   animation: fadeIn 1s 0.5s ease forwards;
   opacity: 0;
+  transform: translateY(10px);
 }
 .algo-card {
   position: absolute;
@@ -514,14 +537,15 @@ body::before {
   border-radius: var(--radius-lg);
   backdrop-filter: blur(20px);
   padding: 1.5rem;
-  width: 260px;
+  width: 290px;
   transition: var(--transition);
   cursor: default;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.18);
 }
 .algo-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--glow); }
-.card-1 { top: 0; left: 50px; transform: rotate(-5deg); z-index: 1; }
-.card-2 { top: 40px; left: 20px; transform: rotate(2deg); z-index: 2; }
-.card-3 { top: 80px; left: 70px; transform: rotate(-2deg); z-index: 3; }
+.card-1 { top: 12px; left: 35px; transform: rotate(-5deg); z-index: 1; }
+.card-2 { top: 82px; left: 8px; transform: rotate(2deg); z-index: 2; }
+.card-3 { top: 152px; left: 58px; transform: rotate(-2deg); z-index: 3; }
 .card-1:hover { z-index: 10; transform: rotate(0) scale(1.05); }
 .card-2:hover { z-index: 10; transform: rotate(0) scale(1.05); }
 .card-3:hover { z-index: 10; transform: rotate(0) scale(1.05); }
@@ -529,6 +553,41 @@ body::before {
 .card-name { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
 .card-tag { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
 .card-complexity { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); }
+
+.feature-strip {
+  padding: 0 5vw 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.feature-tile {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.3rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.feature-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.65rem;
+}
+
+.feature-tile h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-bottom: 0.45rem;
+}
+
+.feature-tile p {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
 
 /* PARADIGM GRID */
 .paradigms-section {
@@ -1684,6 +1743,10 @@ body::before {
     padding: 5rem 5vw 3rem;
   }
   .hero-visual { display: none; }
+  .feature-strip {
+    grid-template-columns: 1fr;
+    padding: 0 5vw 1.5rem;
+  }
   .viz-layout, .compare-layout, .suggest-layout {
     grid-template-columns: 1fr;
   }
@@ -1720,6 +1783,8 @@ body::before {
   .history-toolbar { margin: 0 1rem 1rem; }
   .hero-title { font-size: 2.2rem; }
   .hero-cta { flex-direction: column; }
+  .hero-chips { gap: 0.5rem; }
+  .hero-chip { width: fit-content; max-width: 100%; }
   .viz-btns { grid-template-columns: 1fr 1fr; }
 }
 
