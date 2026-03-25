@@ -2428,7 +2428,7 @@ async function apiRun(payload) {
     });
     if(res.ok) return await res.json();
   } catch {}
-  return null; // fallback: use local computation
+  return null; 
 }
 
 async function apiHistory() {
