@@ -1775,6 +1775,7 @@ function initCompare() {
   catSel.addEventListener('change', () => {
     document.getElementById('knapsackInputGroup').style.display =
       catSel.value === 'knapsack' ? 'block' : 'none';
+    updateCompareHelp(catSel.value);
   });
   sizeSl.addEventListener('input', () => {
     document.getElementById('compareSizeVal').textContent = sizeSl.value;
@@ -1782,14 +1783,43 @@ function initCompare() {
 
   btnRun.addEventListener('click', runComparison);
   btnSave.addEventListener('click', saveLastComparison);
+  updateCompareHelp(catSel.value);
 }
 
 let lastComparisonData = null;
+
+const COMPARISON_HELP = {
+  sorting: {
+    guide: 'Sorting compares speed, number of steps, and whether an algorithm stays reliable on different input shapes.',
+    help: 'Quick Sort is often fast on average, while Merge Sort is the safer pick when you want predictable performance.',
+  },
+  knapsack: {
+    guide: 'Knapsack compares whether the algorithm returns the best value or just a fast-looking choice.',
+    help: 'Dynamic Programming guarantees the best answer. Greedy may be faster, but it can miss the optimal combination.',
+  },
+  shortestpath: {
+    guide: 'Shortest path compares problem fit more than raw speed, because each algorithm solves a different graph variant.',
+    help: 'BFS is for unweighted graphs, Dijkstra is for non-negative weights, and Floyd-Warshall is for all-pairs distances.',
+  },
+  failure: {
+    guide: 'Failure cases show where a tempting shortcut breaks down under the wrong input shape.',
+    help: 'Use this to understand why an algorithm can look good on paper but still fail in practice.',
+  },
+};
+
+function updateCompareHelp(cat) {
+  const info = COMPARISON_HELP[cat] || COMPARISON_HELP.sorting;
+  const help = document.getElementById('compareHelp');
+  const guide = document.getElementById('compareGuideType');
+  if (help) help.textContent = info.help;
+  if (guide) guide.textContent = info.guide;
+}
 
 function runComparison() {
   const cat  = document.getElementById('compareCategory').value;
   const size = +document.getElementById('compareSize').value;
   document.getElementById('failureShowcase').style.display = cat === 'failure' ? 'block' : 'none';
+  updateCompareHelp(cat);
   showLoader();
 
   setTimeout(() => {
@@ -1804,12 +1834,41 @@ function runComparison() {
       lastComparisonData = {cat, size, results, time: Date.now()};
       renderCompareCards(results);
       renderCompareCharts(results, cat, size);
+      renderCompareSummary(results, cat, size);
       document.getElementById('compareInsights').innerHTML = `
         <div class="chart-title">// WHY THIS WINNER?</div>
         <p>${getComparisonInsight(results, cat, size)}</p>
       `;
     }
   }, 600);
+}
+
+function renderCompareSummary(results, cat, size) {
+  const timed = results.filter(item => item.time !== '—').slice();
+  const winner = timed.sort((a, b) => parseFloat(a.time) - parseFloat(b.time))[0] || results[0];
+  const bestCandidate = results.find(item => item.optimal) || winner;
+  const tradeoff = getComparisonInsight(results, cat, size);
+  const summary = document.getElementById('compareSummary');
+  if (!summary) return;
+
+  summary.innerHTML = `
+    <div class="chart-title">// RESULT SUMMARY</div>
+    <div class="compare-summary-grid">
+      <div class="compare-summary-pill">
+        <span class="pill-label">Fastest measured</span>
+        <strong>${winner?.name || '—'}</strong>
+      </div>
+      <div class="compare-summary-pill">
+        <span class="pill-label">Best fit</span>
+        <strong>${bestCandidate?.name || '—'}</strong>
+      </div>
+      <div class="compare-summary-pill">
+        <span class="pill-label">Key takeaway</span>
+        <strong>${cat === 'failure' ? 'Watch for wrong assumptions' : 'Pick the algorithm that matches the problem'}</strong>
+      </div>
+    </div>
+    <p>${tradeoff}</p>
+  `;
 }
 
 function compareSorting(n) {
@@ -1991,6 +2050,7 @@ function renderCompareCards(results) {
   const bestTime = Math.min(...results.filter(r=>r.time!=='—').map(r=>parseFloat(r.time)));
   container.innerHTML = results.map(r => `
     <div class="result-card ${r.optimal&&parseFloat(r.time)===bestTime?'winner':!r.optimal?'loser':''}">
+      <div class="rc-rank">${r.optimal&&parseFloat(r.time)===bestTime?'Winner':'Candidate'}</div>
       <div class="rc-name">${r.name}</div>
       <div class="rc-paradigm">${r.paradigm}</div>
       <div class="rc-metric"><span>Time (ms):</span><span>${r.time}</span></div>

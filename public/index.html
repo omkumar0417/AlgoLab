@@ -320,6 +320,21 @@
     <p>Run multiple algorithms on the same input. See who wins — and who fails.</p>
   </div>
 
+  <div class="compare-guide glass-panel">
+    <div class="compare-guide-item">
+      <div class="guide-label">What to compare</div>
+      <div class="guide-text" id="compareGuideType">Sorting compares speed and stability, knapsack compares optimality, and shortest path compares problem fit.</div>
+    </div>
+    <div class="compare-guide-item">
+      <div class="guide-label">How to read it</div>
+      <div class="guide-text">Look at the result cards first, then use the charts to see how runtime and step count change with the same input.</div>
+    </div>
+    <div class="compare-guide-item">
+      <div class="guide-label">Best for</div>
+      <div class="guide-text">Use this page to choose the right algorithm for a problem, not just the fastest one on one run.</div>
+    </div>
+  </div>
+
   <div class="compare-layout">
     <div class="compare-controls glass-panel">
       <div class="control-group">
@@ -343,16 +358,26 @@
         <input type="number" id="knapsackCapacity" value="50" class="glass-input" min="10" max="200" />
       </div>
 
+      <div class="compare-help" id="compareHelp">
+        Choose a category to see a short explanation of what the comparison means.
+      </div>
+
       <button class="btn-primary" id="btnRunCompare" style="width:100%">⚡ Run Comparison</button>
       <button class="btn-ghost" id="btnSaveHistory" style="width:100%;margin-top:0.5rem">💾 Save to History</button>
     </div>
 
     <div class="compare-results">
+      <div class="compare-summary glass-panel" id="compareSummary">
+        <div class="chart-title">// RESULT SUMMARY</div>
+        <p>Run a comparison to see the best fit, the fastest option, and the most important trade-off for this input.</p>
+      </div>
+
       <!-- Results cards -->
       <div class="compare-cards" id="compareCards">
         <div class="empty-state">
           <div class="es-icon">📊</div>
-          <p>Configure inputs and click Run Comparison</p>
+          <p>Choose a category, set the input size, and click Run Comparison.</p>
+          <span class="empty-hint">We will show the winner, the trade-offs, and a chart you can read at a glance.</span>
         </div>
       </div>
 
