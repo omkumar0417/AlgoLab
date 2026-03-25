@@ -227,6 +227,16 @@
         <input type="text" id="customInput" class="glass-input" placeholder="e.g. 5,3,8,1,9,2" />
       </div>
 
+      <div class="preset-panel">
+        <div class="preset-head">
+          <span>Saved Presets</span>
+          <button class="btn-ghost" id="btnSavePreset" type="button">Save Current</button>
+        </div>
+        <div class="preset-list" id="presetList">
+          <div class="preset-empty">No presets yet.</div>
+        </div>
+      </div>
+
       <div class="viz-btns">
         <button class="btn-primary" id="btnStartViz">▶ Run</button>
         <button class="btn-ghost" id="btnPauseViz">⏸ Pause</button>
@@ -334,6 +344,11 @@
         </div>
       </div>
 
+      <div class="compare-insights glass-panel" id="compareInsights">
+        <div class="chart-title">// WHY THIS WINNER?</div>
+        <p>Run a comparison to get a plain-English recommendation for this input.</p>
+      </div>
+
       <!-- Charts -->
       <div class="compare-charts">
         <div class="chart-box glass-panel">
@@ -409,6 +424,25 @@
     <p>All your algorithm runs from this session. Re-run any past case instantly.</p>
   </div>
 
+  <div class="history-dashboard">
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Total Runs</div>
+      <div class="summary-value" id="summaryRuns">0</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Favorite Category</div>
+      <div class="summary-value" id="summaryCategory">—</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Last Algorithm</div>
+      <div class="summary-value" id="summaryAlgo">—</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Comparisons Saved</div>
+      <div class="summary-value" id="summaryComparisons">0</div>
+    </div>
+  </div>
+
   <div class="history-toolbar glass-panel">
     <input type="text" id="historySearch" class="glass-input" placeholder="🔍 Search history..." />
     <select id="historyFilter" class="glass-select">
@@ -458,6 +492,8 @@
         <input type="text" class="glass-input" id="signupUserId" placeholder="your_id" />
         <label>Password</label>
         <input type="password" class="glass-input" id="signupPassword" placeholder="min 6 characters" />
+        <label>Confirm Password</label>
+        <input type="password" class="glass-input" id="signupConfirmPassword" placeholder="repeat password" />
         <button class="btn-primary" type="submit">Create Account</button>
       </form>
 

@@ -20,6 +20,7 @@ const State = {
   vizTimer: null,
   sortArray: [],
   history: [],
+  presets: [],
   charts: {},
   auth: {
     token: localStorage.getItem('algolab_token') || '',
@@ -68,6 +69,135 @@ function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   if (State.auth.token) headers.Authorization = `Bearer ${State.auth.token}`;
   return headers;
+}
+
+function getPresetStorageKey() {
+  return `algolab_presets_${State.auth.userId || 'guest'}`;
+}
+
+function loadPresets() {
+  try {
+    State.presets = JSON.parse(localStorage.getItem(getPresetStorageKey()) || '[]');
+  } catch {
+    State.presets = [];
+  }
+}
+
+function persistPresets() {
+  localStorage.setItem(getPresetStorageKey(), JSON.stringify(State.presets));
+}
+
+function renderPresets() {
+  const list = document.getElementById('presetList');
+  if (!list) return;
+
+  if (!State.presets.length) {
+    list.innerHTML = '<div class="preset-empty">No presets yet.</div>';
+    return;
+  }
+
+  list.innerHTML = State.presets.map(preset => `
+    <div class="preset-item">
+      <div class="preset-main">
+        <div class="preset-title">${preset.name}</div>
+        <div class="preset-meta">${preset.algoLabel} • ${preset.input}</div>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-mini" onclick="applyPreset('${preset.id}')">Load</button>
+        <button class="preset-mini" onclick="deletePreset('${preset.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function applyPreset(id) {
+  const preset = State.presets.find(item => item.id === id);
+  if (!preset) return;
+  document.getElementById('vizAlgo').value = preset.algo;
+  document.getElementById('customInput').value = preset.input;
+  document.getElementById('inputSize').value = preset.size;
+  document.getElementById('inputSizeVal').textContent = preset.size;
+  updateComplexityBox(preset.algo);
+  updateWhyPanel(preset.algo);
+  showToast(`Loaded preset: ${preset.name}`, 'success');
+}
+
+function deletePreset(id) {
+  State.presets = State.presets.filter(item => item.id !== id);
+  persistPresets();
+  renderPresets();
+  showToast('Preset deleted', 'success');
+}
+
+function saveCurrentPreset() {
+  const algo = document.getElementById('vizAlgo').value;
+  const input = document.getElementById('customInput').value.trim();
+  const size = document.getElementById('inputSize').value;
+  if (!input) {
+    showToast('Enter custom input before saving a preset', 'error');
+    return;
+  }
+
+  const algoLabel = document.getElementById('vizAlgo').selectedOptions[0].textContent;
+  const name = `${algoLabel} preset ${State.presets.length + 1}`;
+  State.presets.unshift({
+    id: String(Date.now()),
+    name,
+    algo,
+    algoLabel,
+    input,
+    size,
+  });
+  State.presets = State.presets.slice(0, 8);
+  persistPresets();
+  renderPresets();
+  showToast('Preset saved', 'success');
+}
+
+function parseCustomArrayInput() {
+  const raw = document.getElementById('customInput')?.value.trim();
+  if (!raw) return null;
+  const values = raw.split(',').map(item => Number(item.trim())).filter(item => Number.isFinite(item));
+  return values.length ? values : null;
+}
+
+function updateHistorySummary() {
+  if (!document.getElementById('summaryRuns')) return;
+  const runs = State.history.length;
+  const comparisons = State.history.filter(item => item.comparison).length;
+  const categoryCounts = State.history.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + 1;
+    return acc;
+  }, {});
+  const favoriteCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  const latestAlgo = State.history[0]?.algo || '—';
+
+  document.getElementById('summaryRuns').textContent = String(runs);
+  document.getElementById('summaryCategory').textContent = favoriteCategory;
+  document.getElementById('summaryAlgo').textContent = latestAlgo;
+  document.getElementById('summaryComparisons').textContent = String(comparisons);
+}
+
+function getComparisonInsight(results, cat, size) {
+  const timedResults = results.filter(item => item.time !== '—');
+  const winner = timedResults.sort((a, b) => parseFloat(a.time) - parseFloat(b.time))[0];
+  if (!winner) {
+    return 'This comparison has no measurable winner yet.';
+  }
+
+  if (cat === 'sorting') {
+    return `${winner.name} wins for n=${size} because it kept the lowest measured runtime on this input. Quick Sort can still collapse on already sorted data, so Merge Sort remains the safer choice when input order is unpredictable.`;
+  }
+  if (cat === 'knapsack') {
+    return `${winner.name} looks best for this run, but the real decision is about correctness: DP guarantees the optimal value, while Greedy can miss the best set of items even when it feels faster.`;
+  }
+  if (cat === 'shortestpath') {
+    return `${winner.name} is the most efficient here, but the graph type matters more than raw time. BFS is best for unweighted graphs, Dijkstra for non-negative weights, and Floyd-Warshall when you need every pair distance.`;
+  }
+  if (cat === 'failure') {
+    return 'The failure dashboard shows why raw speed is not enough. Some algorithms appear fast until the wrong input shape exposes a bad pivot rule, greedy shortcut, or exponential search tree.';
+  }
+  return `${winner.name} is the best fit for this case based on the current runtime and step count.`;
 }
 
 // ============================================================
@@ -274,9 +404,12 @@ function initVisualizer() {
   btnPause.addEventListener('click', togglePause);
   btnReset.addEventListener('click', resetViz);
   btnStep.addEventListener('click', stepViz);
+  document.getElementById('btnSavePreset').addEventListener('click', saveCurrentPreset);
 
   updateComplexityBox('quicksort');
   updateWhyPanel('quicksort');
+  loadPresets();
+  renderPresets();
 }
 
 function updateComplexityBox(algo) {
@@ -409,14 +542,16 @@ function renderBars(arr, comparing = [], swapping = [], sorted = [], pivot = -1)
 }
 
 async function runSortViz(algo) {
-  const n = +document.getElementById('inputSize').value;
-  const arr = genArray(n);
+  const customArr = parseCustomArrayInput();
+  const n = customArr?.length || +document.getElementById('inputSize').value;
+  const arr = customArr ? [...customArr] : genArray(n);
   State.sortArray = [...arr];
   State.vizRunning = true;
 
   document.getElementById('sortViz').classList.remove('hidden');
   renderBars(arr);
   log(`Starting ${algo === 'quicksort' ? 'Quick Sort' : 'Merge Sort'} on ${n} elements`, 'highlight');
+  if (customArr) log(`Using custom input: [${customArr.join(', ')}]`);
 
   const spd = () => Math.max(20, 600 / (State.vizSpeed * 2));
 
@@ -1041,6 +1176,7 @@ let lastComparisonData = null;
 function runComparison() {
   const cat  = document.getElementById('compareCategory').value;
   const size = +document.getElementById('compareSize').value;
+  document.getElementById('failureShowcase').style.display = cat === 'failure' ? 'block' : 'none';
   showLoader();
 
   setTimeout(() => {
@@ -1055,6 +1191,10 @@ function runComparison() {
       lastComparisonData = {cat, size, results, time: Date.now()};
       renderCompareCards(results);
       renderCompareCharts(results, cat, size);
+      document.getElementById('compareInsights').innerHTML = `
+        <div class="chart-title">// WHY THIS WINNER?</div>
+        <p>${getComparisonInsight(results, cat, size)}</p>
+      `;
     }
   }, 600);
 }
@@ -1493,6 +1633,7 @@ function renderHistory() {
   const list = document.getElementById('historyList');
   const search = document.getElementById('historySearch').value.toLowerCase();
   const filter = document.getElementById('historyFilter').value;
+  updateHistorySummary();
 
   if (!State.auth.token) {
     list.innerHTML = `<div class="empty-state"><div class="es-icon">🔐</div><p>Login to see your personal algorithm history.</p></div>`;
@@ -1620,6 +1761,8 @@ function setAuth(token, userId) {
   State.auth.userId = userId || '';
   localStorage.setItem('algolab_token', State.auth.token);
   localStorage.setItem('algolab_user', State.auth.userId);
+  loadPresets();
+  renderPresets();
   updateAuthUI();
   apiHistory();
 }
@@ -1630,6 +1773,8 @@ function clearAuth() {
   State.history = [];
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
+  loadPresets();
+  renderPresets();
   updateAuthUI();
   renderHistory();
 }
@@ -1689,7 +1834,10 @@ function initAuth() {
       e.preventDefault();
       const userId = document.getElementById('signupUserId').value.trim();
       const password = document.getElementById('signupPassword').value.trim();
+      const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
       if (!userId || !password) return showToast('Enter userId and password', 'error');
+      if (userId.length < 3) return showToast('User ID must be at least 3 characters', 'error');
+      if (password !== confirmPassword) return showToast('Passwords do not match', 'error');
 
       try {
         const res = await fetch('/api/auth/signup', {
@@ -1704,6 +1852,7 @@ function initAuth() {
         document.querySelector('[data-auth-tab="login"]')?.click();
         document.getElementById('loginUserId').value = userId;
         document.getElementById('loginPassword').value = '';
+        document.getElementById('signupConfirmPassword').value = '';
       } catch (err) {
         showToast(err.message || 'Signup failed', 'error');
       }
@@ -1806,6 +1955,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSuggest();
   initHistory();
   initAuth();
+  updateHistorySummary();
 
   // Try to load history from API (non-blocking)
   apiHistory();

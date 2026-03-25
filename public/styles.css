@@ -309,6 +309,71 @@ body::before {
   color: var(--accent);
   margin-top: 0.25rem;
 }
+.preset-panel {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.preset-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.preset-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0,229,255,0.03);
+}
+.preset-main {
+  min-width: 0;
+}
+.preset-title {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preset-meta {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+}
+.preset-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.preset-mini {
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.68rem;
+}
+.preset-empty {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
 
 /* ================================================
    HOME PAGE
@@ -931,6 +996,14 @@ body::before {
   gap: 1rem;
   margin-bottom: 1rem;
 }
+.compare-insights {
+  margin-bottom: 1rem;
+}
+.compare-insights p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 0.84rem;
+}
 
 .chart-box {
   background: var(--glass-bg) !important;
@@ -1085,6 +1158,28 @@ body::before {
 /* ================================================
    HISTORY PAGE
    ================================================ */
+.history-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 0 2rem 1rem;
+}
+.summary-card {
+  padding: 1.15rem 1.25rem;
+}
+.summary-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.summary-value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
 .history-toolbar {
   display: flex;
   gap: 1rem;
@@ -1261,6 +1356,7 @@ body::before {
   align-items: center;
   gap: 1rem;
   margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
 .auth-status {
   font-size: 0.8rem;
@@ -1327,6 +1423,7 @@ body::before {
   .viz-layout, .compare-layout, .suggest-layout {
     grid-template-columns: 1fr;
   }
+  .history-dashboard { grid-template-columns: repeat(2, 1fr); }
   .auth-layout { grid-template-columns: 1fr; }
   .viz-controls, .compare-controls {
     position: static;
@@ -1344,6 +1441,7 @@ body::before {
   .nav-auth { display: none; }
   .page-header h2 { font-size: 1.75rem; }
   .viz-layout, .compare-layout, .suggest-layout { padding: 0 1rem 3rem; }
+  .history-dashboard { margin: 0 1rem 1rem; grid-template-columns: 1fr; }
   .history-list { padding: 0 1rem 3rem; }
   .history-toolbar { margin: 0 1rem 1rem; }
   .hero-title { font-size: 2.2rem; }
