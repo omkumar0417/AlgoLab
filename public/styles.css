@@ -404,6 +404,10 @@ body::before {
 .hero-content { position: relative; z-index: 1; }
 .hero-visual { position: relative; z-index: 1; }
 
+.hero-welcome[hidden] {
+  display: none !important;
+}
+
 .hero-badge {
   display: inline-block;
   font-family: var(--font-mono);
@@ -435,10 +439,10 @@ body::before {
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-size: clamp(2.4rem, 4.8vw, 4.15rem);
   font-weight: 800;
-  line-height: 1.05;
-  margin-bottom: 1.5rem;
+  line-height: 0.98;
+  margin-bottom: 1.25rem;
 }
 .title-line {
   display: block;
@@ -464,7 +468,7 @@ body::before {
   color: var(--text-secondary);
   font-size: 1rem;
   line-height: 1.85;
-  max-width: 620px;
+  max-width: 590px;
   margin-bottom: 2rem;
   animation: fadeIn 1s 0.5s ease forwards;
   opacity: 0;
@@ -483,7 +487,7 @@ body::before {
   display: flex;
   gap: 0.7rem;
   flex-wrap: wrap;
-  margin-top: 1.35rem;
+  margin-top: 1rem;
   animation: fadeIn 1s 0.7s ease forwards;
   opacity: 0;
 }
@@ -504,7 +508,7 @@ body::before {
 .hero-stats {
   display: flex;
   gap: 2.5rem;
-  margin-top: 2.2rem;
+  margin-top: 1.8rem;
   animation: fadeIn 1s 0.8s ease forwards;
   opacity: 0;
 }
@@ -555,7 +559,7 @@ body::before {
 .card-complexity { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); }
 
 .feature-strip {
-  padding: 0 5vw 2rem;
+  padding: 0 5vw 1.5rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
