@@ -1707,29 +1707,32 @@ async function runTSPViz() {
 
   log('TSP Branch & Bound: 5 cities', 'highlight');
   let bestCost = Infinity, bestPath = [];
+  const minEdge = Math.min(...adj.flat().filter(w => w > 0));
   const spd = () => Math.max(100, 600 / State.vizSpeed);
 
   async function bnb(path, visited, currCost) {
     if(!State.vizRunning) return;
     if(path.length === n){
       const total = currCost + adj[path[path.length-1]][path[0]];
-      if(total < bestCost){ bestCost=total; bestPath=[...path,path[0]]; }
+      const isNewBest = total < bestCost;
+      if(isNewBest){ bestCost=total; bestPath=[...path,path[0]]; }
       drawTSP(path, bestPath);
-      log(`Complete tour cost: ${total}${total<bestCost+1?' ← NEW BEST':''}`);
+      log(`Complete tour cost: ${total}${isNewBest?' ← NEW BEST':''}`);
       await delay(spd());
       return;
     }
     for(let c=0;c<n;c++){
       if(!visited[c]){
         const nc = currCost + adj[path[path.length-1]][c];
-        if(nc < bestCost){
+        const lowerBound = nc + (n - path.length) * minEdge;
+        if(lowerBound < bestCost){
           path.push(c); visited[c]=true;
           drawTSP(path, bestPath);
           await delay(spd()/2);
           await bnb(path, visited, nc);
           path.pop(); visited[c]=false;
         } else {
-          log(`  Prune branch to ${cities[c].l} (bound ${nc} ≥ best ${bestCost})`);
+          log(`  Prune branch to ${cities[c].l} (bound ${lowerBound} ≥ best ${bestCost})`);
         }
       }
     }
