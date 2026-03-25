@@ -21,6 +21,10 @@ const State = {
   sortArray: [],
   history: JSON.parse(localStorage.getItem('algolab_history') || '[]'),
   charts: {},
+  auth: {
+    token: localStorage.getItem('algolab_token') || '',
+    userId: localStorage.getItem('algolab_user') || '',
+  },
 };
 
 // ============================================================
@@ -1549,6 +1553,108 @@ function initHistory() {
 }
 
 // ============================================================
+// AUTH (LOGIN / SIGNUP)
+// ============================================================
+function setAuth(token, userId) {
+  State.auth.token = token || '';
+  State.auth.userId = userId || '';
+  localStorage.setItem('algolab_token', State.auth.token);
+  localStorage.setItem('algolab_user', State.auth.userId);
+  updateAuthUI();
+}
+
+function clearAuth() {
+  State.auth.token = '';
+  State.auth.userId = '';
+  localStorage.removeItem('algolab_token');
+  localStorage.removeItem('algolab_user');
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const navAuth = document.getElementById('navAuth');
+  if (navAuth) navAuth.textContent = State.auth.userId ? `User: ${State.auth.userId}` : 'Guest';
+
+  const authStatus = document.getElementById('authStatus');
+  if (authStatus) authStatus.textContent = State.auth.userId ? `Logged in as ${State.auth.userId}` : 'Not logged in';
+
+  const logoutBtn = document.getElementById('btnLogout');
+  if (logoutBtn) logoutBtn.style.display = State.auth.userId ? 'inline-flex' : 'none';
+}
+
+function initAuth() {
+  const tabs = document.querySelectorAll('.auth-tab');
+  const loginForm = document.getElementById('loginForm');
+  const signupForm = document.getElementById('signupForm');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.authTab;
+      if (loginForm) loginForm.classList.toggle('active', target === 'login');
+      if (signupForm) signupForm.classList.toggle('active', target === 'signup');
+    });
+  });
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const userId = document.getElementById('loginUserId').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!userId || !password) return showToast('Enter userId and password', 'error');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, password }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
+        setAuth(data.token, data.userId);
+        showToast('Login successful!', 'success');
+      } catch (err) {
+        showToast(err.message || 'Login failed', 'error');
+      }
+    });
+  }
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const userId = document.getElementById('signupUserId').value.trim();
+      const password = document.getElementById('signupPassword').value.trim();
+      if (!userId || !password) return showToast('Enter userId and password', 'error');
+
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, password }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Signup failed');
+        showToast('Signup successful! Please login.', 'success');
+
+        document.querySelector('[data-auth-tab="login"]')?.click();
+        document.getElementById('loginUserId').value = userId;
+        document.getElementById('loginPassword').value = '';
+      } catch (err) {
+        showToast(err.message || 'Signup failed', 'error');
+      }
+    });
+  }
+
+  document.getElementById('btnLogout')?.addEventListener('click', () => {
+    clearAuth();
+    showToast('Logged out', 'success');
+  });
+
+  updateAuthUI();
+}
+
+// ============================================================
 // TOAST & LOADER
 // ============================================================
 let toastTimer;
@@ -1622,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCompare();
   initSuggest();
   initHistory();
+  initAuth();
 
   // Try to load history from API (non-blocking)
   apiHistory();

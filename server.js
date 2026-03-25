@@ -12,6 +12,7 @@ const runRoute     = require('./api/run');
 const compareRoute = require('./api/compare');
 const historyRoute = require('./api/history');
 const suggestRoute = require('./api/suggest');
+const authRoute    = require('./api/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.use('/api/run',     runRoute);
 app.use('/api/compare', compareRoute);
 app.use('/api/history', historyRoute);
 app.use('/api/suggest', suggestRoute);
+app.use('/api/auth',    authRoute);
 
 // Health check
 app.get('/api/health', (req, res) => {

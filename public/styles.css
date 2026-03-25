@@ -126,6 +126,15 @@ body::before {
   letter-spacing: 0.15em;
   color: var(--success);
 }
+.nav-auth {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  border: 1px solid var(--glass-border);
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
 .status-dot {
   width: 6px; height: 6px;
   background: var(--success);
@@ -1205,6 +1214,77 @@ body::before {
 .toast.error   { border-color: var(--danger);  color: var(--danger); }
 
 /* ================================================
+   AUTH
+   ================================================ */
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2rem;
+  padding: 0 2.5rem 4rem;
+}
+.auth-card {
+  padding: 2rem;
+}
+.auth-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.auth-tab {
+  flex: 1;
+  background: var(--bg-1);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.auth-tab.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0,229,255,0.08);
+}
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.auth-form.active {
+  display: flex;
+}
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.auth-status {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.auth-info {
+  padding: 2rem;
+}
+.auth-info h3 {
+  margin-bottom: 0.75rem;
+}
+.auth-note {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--glass-border);
+  padding-top: 1rem;
+}
+.mono {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+/* ================================================
    LOADING
    ================================================ */
 .loading-overlay {
@@ -1247,6 +1327,7 @@ body::before {
   .viz-layout, .compare-layout, .suggest-layout {
     grid-template-columns: 1fr;
   }
+  .auth-layout { grid-template-columns: 1fr; }
   .viz-controls, .compare-controls {
     position: static;
   }
@@ -1260,6 +1341,7 @@ body::before {
   .nav-links.open { display: flex; }
   .hamburger { display: block; }
   .nav-status { display: none; }
+  .nav-auth { display: none; }
   .page-header h2 { font-size: 1.75rem; }
   .viz-layout, .compare-layout, .suggest-layout { padding: 0 1rem 3rem; }
   .history-list { padding: 0 1rem 3rem; }

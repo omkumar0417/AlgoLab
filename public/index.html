@@ -24,11 +24,13 @@
     <li><a href="#" class="nav-link" data-page="compare">Compare</a></li>
     <li><a href="#" class="nav-link" data-page="suggest">Suggest</a></li>
     <li><a href="#" class="nav-link" data-page="history">History</a></li>
+    <li><a href="#" class="nav-link" data-page="auth">Login</a></li>
   </ul>
   <div class="nav-status">
     <span class="status-dot"></span>
     <span class="status-text">LIVE</span>
   </div>
+  <div class="nav-auth" id="navAuth">Guest</div>
   <button class="hamburger" id="hamburger">☰</button>
 </nav>
 
@@ -424,6 +426,51 @@
     <div class="empty-state">
       <div class="es-icon">📋</div>
       <p>No history yet. Run some algorithms first!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: AUTH ===== -->
+<div class="page" id="page-auth">
+  <div class="page-header">
+    <div class="section-tag">// USER ACCESS</div>
+    <h2>Login / Signup</h2>
+    <p>Create an account or sign in with your MongoDB Atlas credentials.</p>
+  </div>
+
+  <div class="auth-layout">
+    <div class="auth-card glass-panel">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth-tab="login">Login</button>
+        <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
+      </div>
+
+      <form id="loginForm" class="auth-form active">
+        <label>User ID</label>
+        <input type="text" class="glass-input" id="loginUserId" placeholder="your_id" />
+        <label>Password</label>
+        <input type="password" class="glass-input" id="loginPassword" placeholder="••••••••" />
+        <button class="btn-primary" type="submit">Login</button>
+      </form>
+
+      <form id="signupForm" class="auth-form">
+        <label>User ID</label>
+        <input type="text" class="glass-input" id="signupUserId" placeholder="your_id" />
+        <label>Password</label>
+        <input type="password" class="glass-input" id="signupPassword" placeholder="min 6 characters" />
+        <button class="btn-primary" type="submit">Create Account</button>
+      </form>
+
+      <div class="auth-actions">
+        <button class="btn-ghost" id="btnLogout" type="button">Logout</button>
+        <span class="auth-status" id="authStatus">Not logged in</span>
+      </div>
+    </div>
+
+    <div class="auth-info glass-panel">
+      <h3>How it works</h3>
+      <p>Your login is stored in MongoDB Atlas (free tier). Passwords are hashed before saving.</p>
+      <div class="auth-note">Tip: Set <span class="mono">JWT_SECRET</span> in .env when deploying.</div>
     </div>
   </div>
 </div>
