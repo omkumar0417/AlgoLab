@@ -21,6 +21,7 @@ const State = {
   sortArray: [],
   history: [],
   presets: [],
+  profile: null,
   charts: {},
   auth: {
     token: localStorage.getItem('algolab_token') || '',
@@ -53,6 +54,7 @@ function navigateTo(page, param) {
 
   // page-specific init
   if (page === 'suggest') initBigOChart();
+  if (page === 'profile') renderProfileDashboard();
   if (page === 'history') renderHistory();
   if (page === 'analytics') loadAnalytics();
   if (page === 'compare' && param) handleFailureParam(param);
@@ -87,6 +89,29 @@ function getAuthHeaders() {
   return headers;
 }
 
+function getAlgorithmParadigm(algoName) {
+  const map = {
+    'Quick Sort': 'Divide & Conquer',
+    'Merge Sort': 'Divide & Conquer',
+    'Heap Sort': 'Heap / Selection',
+    'BFS': 'Graph Traversal',
+    "Dijkstra's": 'Greedy',
+    'Bellman-Ford': 'Dynamic Programming',
+    "Prim's MST": 'Greedy',
+    "Kruskal's MST": 'Greedy + DSU',
+    '0/1 Knapsack DP': 'Dynamic Programming',
+    'Greedy Knapsack': 'Greedy',
+    'Binary Search': 'Divide & Conquer',
+    'N-Queens Backtracking': 'Backtracking',
+    'Rabin-Karp': 'Hashing',
+    'KMP Algorithm': 'Failure Function',
+    'Huffman Coding': 'Greedy',
+    'AVL Tree': 'Balanced BST',
+    'Red-Black Tree': 'Balanced BST',
+  };
+  return map[algoName] || 'Exploration';
+}
+
 async function validateSession() {
   if (!State.auth.token) return;
   try {
@@ -100,11 +125,13 @@ async function validateSession() {
     }
     const data = await res.json();
     if (data?.user?.userId) {
+      State.profile = data.user;
       State.auth.userId = data.user.userId;
       State.auth.isAdmin = !!data.user.isAdmin;
       localStorage.setItem('algolab_user', data.user.userId);
       localStorage.setItem('algolab_is_admin', String(State.auth.isAdmin));
       updateAuthUI();
+      renderProfileDashboard();
     }
   } catch {
     // keep local auth if the network is temporarily unavailable

@@ -23,6 +23,7 @@
     <li><a href="#" class="nav-link" data-page="visualize">Visualize</a></li>
     <li><a href="#" class="nav-link" data-page="compare">Compare</a></li>
     <li><a href="#" class="nav-link" data-page="suggest">Suggest</a></li>
+    <li><a href="#" class="nav-link" data-page="profile">Profile</a></li>
     <li><a href="#" class="nav-link" data-page="history">History</a></li>
     <li><a href="#" class="nav-link" data-page="analytics">Analytics</a></li>
     <li><a href="#" class="nav-link" data-page="auth">Login</a></li>
@@ -423,6 +424,114 @@
     <div class="section-tag">// COMPLEXITY GROWTH ANALYZER</div>
     <h3>Big-O Growth Comparison</h3>
     <canvas id="bigOChart" style="max-height:300px"></canvas>
+  </div>
+</div>
+
+<!-- ===== PAGE: PROFILE ===== -->
+<div class="page" id="page-profile">
+  <div class="page-header">
+    <div class="section-tag">// USER DASHBOARD</div>
+    <h2>Your Profile Dashboard</h2>
+    <p>Your account, learning progress, saved work, quick actions, and personal recommendations in one place.</p>
+  </div>
+
+  <div class="profile-layout">
+    <div class="profile-main">
+      <div class="glass-panel profile-hero">
+        <div class="profile-identity">
+          <div class="profile-avatar" id="profileAvatar">A</div>
+          <div>
+            <div class="profile-name" id="profileName">Guest User</div>
+            <div class="profile-meta" id="profileMeta">Login to view your personal dashboard.</div>
+          </div>
+        </div>
+        <div class="profile-role-card" id="profileRoleCard">
+          <div class="summary-label">Role</div>
+          <div class="summary-value" id="profileRole">Guest</div>
+        </div>
+      </div>
+
+      <div class="history-dashboard">
+        <div class="glass-panel summary-card">
+          <div class="summary-label">Total Runs</div>
+          <div class="summary-value" id="profileRuns">0</div>
+        </div>
+        <div class="glass-panel summary-card">
+          <div class="summary-label">Favorite Algorithm</div>
+          <div class="summary-value" id="profileFavoriteAlgo">—</div>
+        </div>
+        <div class="glass-panel summary-card">
+          <div class="summary-label">Paradigms Tried</div>
+          <div class="summary-value" id="profileParadigms">0</div>
+        </div>
+        <div class="glass-panel summary-card">
+          <div class="summary-label">Saved Presets</div>
+          <div class="summary-value" id="profilePresetCount">0</div>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// ACTIVITY OVERVIEW</div>
+          <canvas id="profileProgressChart"></canvas>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// QUICK ACTIONS</div>
+          <div class="quick-actions">
+            <button class="btn-primary" id="btnContinueLastRun" type="button">Continue Last Run</button>
+            <button class="btn-ghost" id="btnOpenFavoriteAlgo" type="button">Open Favorite Algorithm</button>
+            <button class="btn-ghost" id="btnNewComparison" type="button">New Comparison</button>
+            <button class="btn-ghost" id="btnExportMyHistory" type="button">Export My History</button>
+          </div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// RECENT WORK</div>
+          <div id="profileRecentWork" class="profile-list">No saved runs yet.</div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// SAVED PRESETS</div>
+          <div id="profileSavedPresets" class="profile-list">No presets saved yet.</div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// LEARNING PROGRESS</div>
+          <div id="profileProgressList" class="profile-list">Try a few categories to build progress.</div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// ACHIEVEMENTS</div>
+          <div id="profileAchievements" class="profile-list">Achievements unlock as you explore the lab.</div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// RECOMMENDATIONS</div>
+          <div id="profileRecommendations" class="profile-list">Personal suggestions appear after you start using the app.</div>
+        </div>
+
+        <div class="glass-panel profile-section">
+          <div class="chart-title">// ACCOUNT SETTINGS</div>
+          <div class="settings-group">
+            <label>Change Password</label>
+            <input type="password" class="glass-input" id="profileNewPassword" placeholder="new password" />
+            <input type="password" class="glass-input" id="profileConfirmPassword" placeholder="confirm new password" />
+            <button class="btn-primary" id="btnProfileChangePassword" type="button">Update Password</button>
+          </div>
+          <div class="quick-actions">
+            <button class="btn-ghost" id="btnClearMyPresets" type="button">Clear Saved Presets</button>
+            <button class="btn-ghost" id="btnResetMyHistory" type="button">Clear My History</button>
+            <button class="btn-ghost" id="btnProfileLogout" type="button">Logout</button>
+          </div>
+        </div>
+
+        <div class="glass-panel profile-section" id="adminStatusCard">
+          <div class="chart-title">// ADMIN STATUS</div>
+          <div id="profileAdminStatus" class="profile-list">No admin access for this account.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
