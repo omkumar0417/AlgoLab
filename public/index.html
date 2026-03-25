@@ -664,6 +664,25 @@
     </div>
   </div>
 
+  <div class="history-dashboard">
+    <div class="glass-panel summary-card">
+      <div class="summary-label">New Users (7d)</div>
+      <div class="summary-value" id="analyticsNewUsers">0</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Avg Runs / User</div>
+      <div class="summary-value" id="analyticsAvgRuns">0.0</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Comparison Rate</div>
+      <div class="summary-value" id="analyticsComparisonRate">0%</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Normal Runs</div>
+      <div class="summary-value" id="analyticsNormalRuns">0</div>
+    </div>
+  </div>
+
   <div class="analytics-grid">
     <div class="glass-panel analytics-list">
       <div class="chart-title">// MOST RUN ALGORITHMS</div>
@@ -678,12 +697,24 @@
       <div id="analyticsUsersList">Admin login required.</div>
     </div>
     <div class="glass-panel analytics-list">
+      <div class="chart-title">// TOP COMPARERS</div>
+      <div id="analyticsComparersList">Admin login required.</div>
+    </div>
+    <div class="glass-panel analytics-list">
       <div class="chart-title">// RECENT ACTIVITY</div>
       <div id="analyticsRecentActivity">Admin login required.</div>
     </div>
     <div class="glass-panel analytics-list analytics-chart">
       <div class="chart-title">// ACTIVITY OVER 7 DAYS</div>
       <canvas id="analyticsActivityChart"></canvas>
+    </div>
+    <div class="glass-panel analytics-list analytics-chart">
+      <div class="chart-title">// RUN MIX</div>
+      <canvas id="analyticsMixChart"></canvas>
+    </div>
+    <div class="glass-panel analytics-list analytics-chart">
+      <div class="chart-title">// SIGNUPS OVER 7 DAYS</div>
+      <canvas id="analyticsSignupChart"></canvas>
     </div>
   </div>
 </div>

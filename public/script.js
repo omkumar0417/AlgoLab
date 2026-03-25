@@ -268,6 +268,8 @@ function renderAnalyticsRows(items, emptyText) {
 }
 
 let analyticsActivityChart = null;
+let analyticsMixChart = null;
+let analyticsSignupChart = null;
 
 function renderAnalyticsActivityChart(rows) {
   const canvas = document.getElementById('analyticsActivityChart');
@@ -304,11 +306,70 @@ function renderAnalyticsActivityChart(rows) {
   });
 }
 
+function renderAnalyticsMixChart(stats) {
+  const canvas = document.getElementById('analyticsMixChart');
+  if (!canvas) return;
+  if (analyticsMixChart) analyticsMixChart.destroy();
+
+  analyticsMixChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: ['Comparisons', 'Normal runs'],
+      datasets: [{
+        data: [stats.totalComparisons || 0, stats.totalNormalRuns || 0],
+        backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(0,229,255,0.75)'],
+        borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
+      },
+    },
+  });
+}
+
+function renderAnalyticsSignupChart(rows) {
+  const canvas = document.getElementById('analyticsSignupChart');
+  if (!canvas) return;
+  if (analyticsSignupChart) analyticsSignupChart.destroy();
+
+  const labels = rows.map(item => item.date);
+  const values = rows.map(item => item.count);
+  analyticsSignupChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Signups',
+        data: values,
+        backgroundColor: 'rgba(124,58,237,0.75)',
+        borderColor: '#7c3aed',
+        borderWidth: 1,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 11 } } },
+      },
+      scales: {
+        x: { ticks: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#8892b0', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' } },
+      },
+    },
+  });
+}
+
 async function loadAnalytics() {
   if (!State.auth.token || !State.auth.isAdmin) {
     document.getElementById('analyticsAlgorithms').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     document.getElementById('analyticsTypes').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     document.getElementById('analyticsUsersList').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
+    document.getElementById('analyticsComparersList').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     document.getElementById('analyticsRecentActivity').textContent = State.auth.token ? 'Admin access required.' : 'Login to load analytics.';
     return;
   }
@@ -325,6 +386,10 @@ async function loadAnalytics() {
     document.getElementById('analyticsRuns').textContent = String(stats.totalRuns);
     document.getElementById('analyticsComparisons').textContent = String(stats.totalComparisons || 0);
     document.getElementById('analyticsActiveUsers').textContent = String(stats.activeUsers7d || 0);
+    document.getElementById('analyticsNewUsers').textContent = String(stats.newUsers7d || 0);
+    document.getElementById('analyticsAvgRuns').textContent = String(stats.averageRunsPerUser || '0.0');
+    document.getElementById('analyticsComparisonRate').textContent = `${stats.comparisonRate || '0.0'}%`;
+    document.getElementById('analyticsNormalRuns').textContent = String(stats.totalNormalRuns || 0);
     document.getElementById('analyticsAlgorithms').innerHTML = stats.mostRunAlgorithms.length
       ? stats.mostRunAlgorithms.map(item => `<div class="analytics-row"><span>${item.name}</span><strong>${item.count}</strong></div>`).join('')
       : 'No algorithm data yet.';
@@ -334,14 +399,20 @@ async function loadAnalytics() {
     document.getElementById('analyticsUsersList').innerHTML = stats.topUsers.length
       ? stats.topUsers.map(item => `<div class="analytics-row"><span>${item.displayName} <small>@${item.userId}</small></span><strong>${item.count}</strong></div>`).join('')
       : 'No user activity yet.';
+    document.getElementById('analyticsComparersList').innerHTML = stats.topComparers.length
+      ? stats.topComparers.map(item => `<div class="analytics-row"><span>${item.displayName} <small>@${item.userId}</small></span><strong>${item.count}</strong></div>`).join('')
+      : 'No comparison activity yet.';
     document.getElementById('analyticsRecentActivity').innerHTML = stats.recentActivity.length
       ? stats.recentActivity.map(item => `<div class="analytics-activity"><div><strong>${item.displayName}</strong> <span>@${item.userId}</span></div><div>${item.algo}</div><small>${item.category}${item.comparison ? ' • comparison' : ''}</small></div>`).join('')
       : 'No category data yet.';
     renderAnalyticsActivityChart(stats.recentActivityByDay || []);
+    renderAnalyticsMixChart(stats);
+    renderAnalyticsSignupChart(stats.recentSignups || []);
   } catch (err) {
     document.getElementById('analyticsAlgorithms').textContent = err.message || 'Could not load analytics.';
     document.getElementById('analyticsTypes').textContent = 'Try again after more runs are saved.';
     document.getElementById('analyticsUsersList').textContent = 'Try again after more runs are saved.';
+    document.getElementById('analyticsComparersList').textContent = 'Try again after more runs are saved.';
     document.getElementById('analyticsRecentActivity').textContent = 'Try again after more runs are saved.';
   }
 }
@@ -2631,7 +2702,6 @@ function initAuth() {
   const tabs = document.querySelectorAll('.auth-tab, .auth-inline-link[data-auth-tab]');
   const loginForm = document.getElementById('loginForm');
   const signupForm = document.getElementById('signupForm');
-  const resetForm = document.getElementById('resetForm');
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -2639,10 +2709,8 @@ function initAuth() {
       if (!target) return;
       tabs.forEach(t => t.classList.remove('active'));
       document.querySelectorAll(`.auth-tab[data-auth-tab="${target}"]`).forEach(btn => btn.classList.add('active'));
-      if (tab.classList.contains('auth-inline-link')) tab.classList.add('active');
       if (loginForm) loginForm.classList.toggle('active', target === 'login');
       if (signupForm) signupForm.classList.toggle('active', target === 'signup');
-      if (resetForm) resetForm.classList.toggle('active', target === 'reset');
     });
   });
 
@@ -2698,32 +2766,6 @@ function initAuth() {
         document.getElementById('signupDisplayName').value = '';
       } catch (err) {
         showToast(err.message || 'Signup failed', 'error');
-      }
-    });
-  }
-
-  if (resetForm) {
-    resetForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const userId = document.getElementById('resetUserId').value.trim();
-      const password = document.getElementById('resetPassword').value.trim();
-      const confirmPassword = document.getElementById('resetConfirmPassword').value.trim();
-      if (!userId || !password) return showToast('Enter userId and new password', 'error');
-      if (password !== confirmPassword) return showToast('Passwords do not match', 'error');
-
-      try {
-        const res = await fetch('/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, password }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Reset failed');
-        showToast('Password reset successful. Please login.', 'success');
-        document.querySelector('[data-auth-tab="login"]')?.click();
-        document.getElementById('loginUserId').value = userId;
-      } catch (err) {
-        showToast(err.message || 'Reset failed', 'error');
       }
     });
   }

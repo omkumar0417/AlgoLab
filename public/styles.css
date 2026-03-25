@@ -1682,6 +1682,13 @@ body::before {
 .auth-hero {
   padding: 0.25rem 0.15rem 1rem;
 }
+.auth-preface-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
 .auth-hero h3 {
   font-family: var(--font-display);
   font-size: 1.55rem;
@@ -1714,26 +1721,6 @@ body::before {
 .auth-mini-stat span {
   color: var(--text-dim);
   font-size: 0.75rem;
-}
-.auth-preface {
-  margin-bottom: 1rem;
-  padding: 1rem 1.1rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(0,229,255,0.08), rgba(255,255,255,0.03));
-  border: 1px solid rgba(0,229,255,0.14);
-}
-.auth-preface-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  margin-bottom: 0.45rem;
-}
-.auth-preface p {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  line-height: 1.65;
 }
 .auth-tabs {
   display: flex;
@@ -1906,11 +1893,7 @@ body::before {
   .hero-chips { gap: 0.5rem; }
   .hero-chip { width: fit-content; max-width: 100%; }
   .viz-btns { grid-template-columns: 1fr 1fr; }
-  .auth-card,
-  .auth-info {
-    padding: 1.25rem;
-    border-radius: 22px;
-  }
+  .auth-card { padding: 1.25rem; border-radius: 22px; }
 }
 
 /* ================================================
