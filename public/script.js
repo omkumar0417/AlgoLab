@@ -26,10 +26,15 @@ const State = {
   auth: {
     token: localStorage.getItem('algolab_token') || '',
     userId: localStorage.getItem('algolab_user') || '',
+    displayName: localStorage.getItem('algolab_display_name') || '',
     expiresAt: localStorage.getItem('algolab_expires_at') || '',
     isAdmin: localStorage.getItem('algolab_is_admin') === 'true',
   },
 };
+
+function getDisplayName(user = {}) {
+  return String(user.displayName || State.auth.displayName || user.userId || State.auth.userId || '').trim();
+}
 
 // ============================================================
 // NAVIGATION
@@ -127,8 +132,10 @@ async function validateSession() {
     if (data?.user?.userId) {
       State.profile = data.user;
       State.auth.userId = data.user.userId;
+      State.auth.displayName = data.user.displayName || data.user.userId;
       State.auth.isAdmin = !!data.user.isAdmin;
       localStorage.setItem('algolab_user', data.user.userId);
+      localStorage.setItem('algolab_display_name', State.auth.displayName);
       localStorage.setItem('algolab_is_admin', String(State.auth.isAdmin));
       updateAuthUI();
       renderProfileDashboard();
@@ -293,7 +300,10 @@ async function loadUserProfile() {
     const data = await res.json();
     if (data?.user) {
       State.profile = data.user;
+      State.auth.displayName = data.user.displayName || data.user.userId || State.auth.displayName;
+      localStorage.setItem('algolab_display_name', State.auth.displayName);
       renderProfileDashboard();
+      updateAuthUI();
     }
   } catch {}
 }
@@ -345,11 +355,14 @@ function renderProfileDashboard() {
     document.getElementById('profileAchievements').textContent = 'Achievements unlock as you explore the lab.';
     document.getElementById('profileRecommendations').textContent = 'Personal suggestions appear after a few runs.';
     document.getElementById('profileAdminStatus').textContent = 'No admin access for this account.';
+    const profileDisplayName = document.getElementById('profileDisplayName');
+    if (profileDisplayName) profileDisplayName.value = '';
     renderProfileChart({});
     return;
   }
 
-  const user = State.profile || { userId: State.auth.userId, isAdmin: State.auth.isAdmin };
+  const user = State.profile || { userId: State.auth.userId, displayName: State.auth.displayName || State.auth.userId, isAdmin: State.auth.isAdmin };
+  const displayName = getDisplayName(user);
   const runs = State.history.length;
   const algoCounts = State.history.reduce((acc, item) => {
     acc[item.algo] = (acc[item.algo] || 0) + 1;
@@ -381,9 +394,9 @@ function renderProfileDashboard() {
   if (missingCategories.includes('compression')) recommendations.push('Explore Huffman Coding to add a greedy compression example.');
   if (!recommendations.length) recommendations.push('You have broad coverage already. Save more comparisons to deepen your insights.');
 
-  document.getElementById('profileAvatar').textContent = String(user.userId || 'U').charAt(0).toUpperCase();
-  profileName.textContent = user.userId || State.auth.userId;
-  document.getElementById('profileMeta').textContent = `Joined ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'recently'} • Last login ${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'this session'} • Session ${State.auth.expiresAt ? `active until ${new Date(State.auth.expiresAt).toLocaleString()}` : 'active'}`;
+  document.getElementById('profileAvatar').textContent = String(displayName || user.userId || 'U').charAt(0).toUpperCase();
+  profileName.textContent = displayName || user.userId || State.auth.userId;
+  document.getElementById('profileMeta').textContent = `Username @${user.userId || State.auth.userId} • Joined ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'recently'} • Last login ${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'this session'} • Session ${State.auth.expiresAt ? `active until ${new Date(State.auth.expiresAt).toLocaleString()}` : 'active'}`;
   document.getElementById('profileRole').textContent = user.isAdmin ? 'Admin' : 'Student';
   document.getElementById('profileRuns').textContent = String(runs);
   document.getElementById('profileFavoriteAlgo').textContent = favoriteAlgo;
@@ -407,6 +420,8 @@ function renderProfileDashboard() {
   document.getElementById('profileAdminStatus').innerHTML = user.isAdmin
     ? `<div class="admin-highlight">Admin access enabled. You can review platform-wide usage from the Analytics tab.</div>`
     : 'No admin access for this account.';
+  const profileDisplayName = document.getElementById('profileDisplayName');
+  if (profileDisplayName) profileDisplayName.value = displayName;
 
   renderProfileChart(categoryCounts);
 }
@@ -2410,13 +2425,15 @@ function initHistory() {
 // ============================================================
 // AUTH (LOGIN / SIGNUP)
 // ============================================================
-function setAuth(token, userId, expiresAt = '', isAdmin = false) {
+function setAuth(token, userId, expiresAt = '', isAdmin = false, displayName = '') {
   State.auth.token = token || '';
   State.auth.userId = userId || '';
+  State.auth.displayName = displayName || userId || '';
   State.auth.expiresAt = expiresAt || '';
   State.auth.isAdmin = !!isAdmin;
   localStorage.setItem('algolab_token', State.auth.token);
   localStorage.setItem('algolab_user', State.auth.userId);
+  localStorage.setItem('algolab_display_name', State.auth.displayName);
   localStorage.setItem('algolab_expires_at', State.auth.expiresAt);
   localStorage.setItem('algolab_is_admin', String(State.auth.isAdmin));
   loadPresets();
@@ -2431,12 +2448,14 @@ function setAuth(token, userId, expiresAt = '', isAdmin = false) {
 function clearAuth() {
   State.auth.token = '';
   State.auth.userId = '';
+  State.auth.displayName = '';
   State.auth.expiresAt = '';
   State.auth.isAdmin = false;
   State.history = [];
   State.profile = null;
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
+  localStorage.removeItem('algolab_display_name');
   localStorage.removeItem('algolab_expires_at');
   localStorage.removeItem('algolab_is_admin');
   loadPresets();
@@ -2449,7 +2468,8 @@ function clearAuth() {
 
 function updateAuthUI() {
   const navAuth = document.getElementById('navAuth');
-  if (navAuth) navAuth.textContent = State.auth.userId ? `User: ${State.auth.userId}` : 'Guest';
+  const displayName = getDisplayName();
+  if (navAuth) navAuth.textContent = State.auth.userId ? `Welcome, ${displayName}` : 'Guest';
   const analyticsLink = document.querySelector('[data-page="analytics"]');
   if (analyticsLink) analyticsLink.parentElement.style.display = State.auth.isAdmin ? '' : 'none';
   const profileLink = document.querySelector('[data-page="profile"]');
@@ -2458,12 +2478,28 @@ function updateAuthUI() {
   const authStatus = document.getElementById('authStatus');
   if (authStatus) {
     authStatus.textContent = State.auth.userId
-      ? `Logged in as ${State.auth.userId}${State.auth.isAdmin ? ' • admin' : ''}${State.auth.expiresAt ? ` • session until ${new Date(State.auth.expiresAt).toLocaleString()}` : ''}`
+      ? `Logged in as ${displayName} (@${State.auth.userId})${State.auth.isAdmin ? ' • admin' : ''}${State.auth.expiresAt ? ` • session until ${new Date(State.auth.expiresAt).toLocaleString()}` : ''}`
       : 'Not logged in';
   }
 
   const logoutBtn = document.getElementById('btnLogout');
   if (logoutBtn) logoutBtn.style.display = State.auth.userId ? 'inline-flex' : 'none';
+  updateHeroWelcome();
+}
+
+function updateHeroWelcome() {
+  const welcome = document.getElementById('heroWelcome');
+  if (!welcome) return;
+
+  if (!State.auth.userId) {
+    welcome.hidden = true;
+    welcome.textContent = '';
+    return;
+  }
+
+  const displayName = getDisplayName();
+  welcome.hidden = false;
+  welcome.textContent = `Welcome back, ${displayName}. Your saved runs and profile are ready.`;
 }
 
 function initAuth() {
@@ -2498,7 +2534,7 @@ function initAuth() {
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
-        setAuth(data.token, data.userId, data.expiresAt, data.isAdmin);
+        setAuth(data.token, data.userId, data.expiresAt, data.isAdmin, data.displayName);
         showToast('Login successful!', 'success');
         navigateTo('history');
       } catch (err) {
@@ -2511,6 +2547,7 @@ function initAuth() {
     signupForm.addEventListener('submit', async e => {
       e.preventDefault();
       const userId = document.getElementById('signupUserId').value.trim();
+      const displayName = document.getElementById('signupDisplayName').value.trim();
       const password = document.getElementById('signupPassword').value.trim();
       const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
       if (!userId || !password) return showToast('Enter userId and password', 'error');
@@ -2521,7 +2558,7 @@ function initAuth() {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, password }),
+          body: JSON.stringify({ userId, displayName, password }),
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Signup failed');
@@ -2531,6 +2568,7 @@ function initAuth() {
         document.getElementById('loginUserId').value = userId;
         document.getElementById('loginPassword').value = '';
         document.getElementById('signupConfirmPassword').value = '';
+        document.getElementById('signupDisplayName').value = '';
       } catch (err) {
         showToast(err.message || 'Signup failed', 'error');
       }
@@ -2618,6 +2656,30 @@ function initProfile() {
       showToast('Password updated', 'success');
     } catch (err) {
       showToast(err.message || 'Password update failed', 'error');
+    }
+  });
+
+  document.getElementById('btnProfileUpdateName')?.addEventListener('click', async () => {
+    if (!requireLogin('Login to update your display name')) return;
+    const displayName = document.getElementById('profileDisplayName').value.trim();
+    if (!displayName) return showToast('Enter a display name', 'error');
+
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ displayName }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Display name update failed');
+      State.profile = data.user;
+      State.auth.displayName = data.user?.displayName || displayName;
+      localStorage.setItem('algolab_display_name', State.auth.displayName);
+      updateAuthUI();
+      renderProfileDashboard();
+      showToast('Display name updated', 'success');
+    } catch (err) {
+      showToast(err.message || 'Display name update failed', 'error');
     }
   });
 

@@ -46,6 +46,7 @@
     </div>
     <div class="hero-content">
       <div class="hero-badge">DAA Strategy Lab · v4.0</div>
+      <div class="hero-welcome" id="heroWelcome" hidden></div>
       <h1 class="hero-title">
         <span class="title-line">Explore</span>
         <span class="title-line accent">Algorithms.</span>
@@ -514,6 +515,11 @@
         <div class="glass-panel profile-section">
           <div class="chart-title">// ACCOUNT SETTINGS</div>
           <div class="settings-group">
+            <label>Display Name</label>
+            <input type="text" class="glass-input" id="profileDisplayName" placeholder="your display name" />
+            <button class="btn-ghost" id="btnProfileUpdateName" type="button">Update Display Name</button>
+          </div>
+          <div class="settings-group">
             <label>Change Password</label>
             <input type="password" class="glass-input" id="profileNewPassword" placeholder="new password" />
             <input type="password" class="glass-input" id="profileConfirmPassword" placeholder="confirm new password" />
@@ -649,6 +655,8 @@
       <form id="signupForm" class="auth-form">
         <label>User ID</label>
         <input type="text" class="glass-input" id="signupUserId" placeholder="your_id" />
+        <label>Display Name</label>
+        <input type="text" class="glass-input" id="signupDisplayName" placeholder="how we should greet you" />
         <label>Password</label>
         <input type="password" class="glass-input" id="signupPassword" placeholder="min 6 characters" />
         <label>Confirm Password</label>

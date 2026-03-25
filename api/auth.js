@@ -1,6 +1,6 @@
 /**
  * Simple Auth Routes (Login + Signup)
- * Stores users in MongoDB Atlas: { userId, passwordHash, createdAt }
+ * Stores users in MongoDB Atlas: { userId, displayName, passwordHash, createdAt }
  */
 
 const express = require('express');
@@ -16,6 +16,21 @@ function normalizeUserId(userId) {
   return String(userId || '').trim();
 }
 
+function normalizeDisplayName(displayName, fallback = '') {
+  const value = String(displayName || '').trim().replace(/\s+/g, ' ');
+  return value || fallback;
+}
+
+function buildSafeUser(user) {
+  if (!user) return null;
+  const displayName = normalizeDisplayName(user.displayName, user.userId);
+  return {
+    ...user,
+    displayName,
+    isAdmin: isAdminUser(user.userId),
+  };
+}
+
 function getExpiryDate(token) {
   const decoded = jwt.decode(token);
   return decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null;
@@ -24,6 +39,7 @@ function getExpiryDate(token) {
 router.post('/signup', async (req, res) => {
   try {
     const userId = normalizeUserId(req.body?.userId);
+    const displayName = normalizeDisplayName(req.body?.displayName, userId);
     const password = String(req.body?.password || '').trim();
 
     if (!userId || !password) {
@@ -43,7 +59,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await users.insertOne({ userId, passwordHash, createdAt: new Date() });
+    await users.insertOne({ userId, displayName, passwordHash, createdAt: new Date() });
 
     return res.json({ success: true, message: 'signup successful' });
   } catch (err) {
@@ -75,11 +91,25 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+    const displayName = normalizeDisplayName(user.displayName, userId);
+    if (!user.displayName || normalizeDisplayName(user.displayName) !== displayName) {
+      await users.updateOne(
+        { userId },
+        { $set: { displayName } }
+      );
+    }
     await users.updateOne(
       { userId },
       { $set: { lastLoginAt: new Date() } }
     );
-    return res.json({ success: true, token, userId, expiresAt: getExpiryDate(token), isAdmin: isAdminUser(userId) });
+    return res.json({
+      success: true,
+      token,
+      userId,
+      displayName,
+      expiresAt: getExpiryDate(token),
+      isAdmin: isAdminUser(userId),
+    });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'login failed' });
   }
@@ -132,9 +162,38 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'user not found' });
     }
 
-    return res.json({ success: true, user: { ...user, isAdmin: isAdminUser(user.userId) } });
+    return res.json({ success: true, user: buildSafeUser(user) });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'session check failed' });
+  }
+});
+
+router.patch('/profile', requireAuth, async (req, res) => {
+  try {
+    const displayName = normalizeDisplayName(req.body?.displayName);
+    if (!displayName) {
+      return res.status(400).json({ success: false, message: 'display name is required' });
+    }
+
+    const db = await connectDB();
+    if (!db) return res.status(500).json({ success: false, message: 'database not configured' });
+
+    const result = await db.collection('users').updateOne(
+      { userId: req.user.userId },
+      { $set: { displayName, displayNameUpdatedAt: new Date() } }
+    );
+
+    if (!result.matchedCount) {
+      return res.status(404).json({ success: false, message: 'user not found' });
+    }
+
+    const user = await db.collection('users').findOne(
+      { userId: req.user.userId },
+      { projection: { passwordHash: 0 } }
+    );
+    return res.json({ success: true, user: buildSafeUser(user) });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'profile update failed' });
   }
 });
 
