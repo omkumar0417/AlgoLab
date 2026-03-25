@@ -13,6 +13,7 @@ const compareRoute = require('./api/compare');
 const historyRoute = require('./api/history');
 const suggestRoute = require('./api/suggest');
 const authRoute    = require('./api/auth');
+const adminRoute   = require('./api/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/api/compare', compareRoute);
 app.use('/api/history', historyRoute);
 app.use('/api/suggest', suggestRoute);
 app.use('/api/auth',    authRoute);
+app.use('/api/admin',   adminRoute);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -86,6 +86,26 @@ function dijkstra(adj, src, n) {
   return { distances: dist, steps, timeMs: time.toFixed(4) };
 }
 
+function binarySearch(arr, target) {
+  let steps = 0;
+  let lo = 0;
+  let hi = arr.length - 1;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const t = process.hrtime.bigint();
+  while (lo <= hi) {
+    steps++;
+    const mid = Math.floor((lo + hi) / 2);
+    if (sorted[mid] === target) {
+      const time = Number(process.hrtime.bigint() - t) / 1e6;
+      return { found: true, index: mid, steps, timeMs: time.toFixed(4), sorted };
+    }
+    if (sorted[mid] < target) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  const time = Number(process.hrtime.bigint() - t) / 1e6;
+  return { found: false, index: -1, steps, timeMs: time.toFixed(4), sorted };
+}
+
 // ── Route handler ─────────────────────────────────────────────
 
 router.post('/', async (req, res) => {
@@ -106,6 +126,9 @@ router.post('/', async (req, res) => {
         break;
       case 'dijkstra':
         result = dijkstra(params.adj || [], params.src || 0, params.n || 4);
+        break;
+      case 'binary_search':
+        result = binarySearch(input, params.target);
         break;
       default:
         return res.status(400).json({ error: `Unknown algorithm: ${algo}` });

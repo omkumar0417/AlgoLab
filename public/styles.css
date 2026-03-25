@@ -1004,6 +1004,28 @@ body::before {
   line-height: 1.8;
   font-size: 0.84rem;
 }
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0 2rem 4rem;
+}
+.analytics-list {
+  padding: 1.25rem;
+}
+.analytics-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+.analytics-row strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
 
 .chart-box {
   background: var(--glass-bg) !important;
@@ -1424,6 +1446,7 @@ body::before {
     grid-template-columns: 1fr;
   }
   .history-dashboard { grid-template-columns: repeat(2, 1fr); }
+  .analytics-grid { grid-template-columns: 1fr; margin: 0 2rem 4rem; }
   .auth-layout { grid-template-columns: 1fr; }
   .viz-controls, .compare-controls {
     position: static;
@@ -1442,6 +1465,7 @@ body::before {
   .page-header h2 { font-size: 1.75rem; }
   .viz-layout, .compare-layout, .suggest-layout { padding: 0 1rem 3rem; }
   .history-dashboard { margin: 0 1rem 1rem; grid-template-columns: 1fr; }
+  .analytics-grid { margin: 0 1rem 3rem; }
   .history-list { padding: 0 1rem 3rem; }
   .history-toolbar { margin: 0 1rem 1rem; }
   .hero-title { font-size: 2.2rem; }

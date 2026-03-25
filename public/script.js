@@ -25,6 +25,7 @@ const State = {
   auth: {
     token: localStorage.getItem('algolab_token') || '',
     userId: localStorage.getItem('algolab_user') || '',
+    expiresAt: localStorage.getItem('algolab_expires_at') || '',
   },
 };
 
@@ -47,7 +48,16 @@ function navigateTo(page, param) {
   // page-specific init
   if (page === 'suggest') initBigOChart();
   if (page === 'history') renderHistory();
+  if (page === 'analytics') loadAnalytics();
   if (page === 'compare' && param) handleFailureParam(param);
+  if (page === 'visualize' && param) {
+    const targetAlgo = document.getElementById('vizAlgo');
+    if (targetAlgo && AlgoMeta[param]) {
+      targetAlgo.value = param;
+      updateComplexityBox(param);
+      updateWhyPanel(param);
+    }
+  }
 }
 
 function handleFailureParam(param) {
@@ -69,6 +79,28 @@ function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   if (State.auth.token) headers.Authorization = `Bearer ${State.auth.token}`;
   return headers;
+}
+
+async function validateSession() {
+  if (!State.auth.token) return;
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      clearAuth();
+      showToast('Session expired. Please login again.', 'error');
+      return;
+    }
+    const data = await res.json();
+    if (data?.user?.userId) {
+      State.auth.userId = data.user.userId;
+      localStorage.setItem('algolab_user', data.user.userId);
+      updateAuthUI();
+    }
+  } catch {
+    // keep local auth if the network is temporarily unavailable
+  }
 }
 
 function getPresetStorageKey() {
@@ -178,6 +210,37 @@ function updateHistorySummary() {
   document.getElementById('summaryComparisons').textContent = String(comparisons);
 }
 
+async function loadAnalytics() {
+  if (!State.auth.token) {
+    document.getElementById('analyticsAlgorithms').textContent = 'Login to load analytics.';
+    document.getElementById('analyticsTypes').textContent = 'Login to load analytics.';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/stats', {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Could not load analytics');
+
+    const stats = data.stats;
+    document.getElementById('analyticsUsers').textContent = String(stats.totalUsers);
+    document.getElementById('analyticsRuns').textContent = String(stats.totalRuns);
+    document.getElementById('analyticsTopAlgo').textContent = stats.mostRunAlgorithms[0]?.name || '—';
+    document.getElementById('analyticsTopType').textContent = stats.commonProblemTypes[0]?.name || '—';
+    document.getElementById('analyticsAlgorithms').innerHTML = stats.mostRunAlgorithms.length
+      ? stats.mostRunAlgorithms.map(item => `<div class="analytics-row"><span>${item.name}</span><strong>${item.count}</strong></div>`).join('')
+      : 'No algorithm data yet.';
+    document.getElementById('analyticsTypes').innerHTML = stats.commonProblemTypes.length
+      ? stats.commonProblemTypes.map(item => `<div class="analytics-row"><span>${item.name}</span><strong>${item.count}</strong></div>`).join('')
+      : 'No category data yet.';
+  } catch (err) {
+    document.getElementById('analyticsAlgorithms').textContent = err.message || 'Could not load analytics.';
+    document.getElementById('analyticsTypes').textContent = 'Try again after more runs are saved.';
+  }
+}
+
 function getComparisonInsight(results, cat, size) {
   const timedResults = results.filter(item => item.time !== '—');
   const winner = timedResults.sort((a, b) => parseFloat(a.time) - parseFloat(b.time))[0];
@@ -282,6 +345,17 @@ const AlgoMeta = {
           then merging. It is stable and predictable — preferred for linked lists or external sorting — 
           but uses O(n) extra space unlike Quick Sort.`,
   },
+  heapsort: {
+    name: 'Heap Sort',
+    paradigm: 'Heap / Selection',
+    best: 'O(n log n)',
+    avg: 'O(n log n)',
+    worst: 'O(n log n)',
+    space: 'O(1)',
+    why: `Heap Sort first builds a max heap, then repeatedly extracts the largest element to the end of the array.
+          It guarantees O(n log n) with constant extra space, which makes it dependable when memory is tight.
+          Its tradeoff is weaker cache locality and less practical speed than Quick Sort.`,
+  },
   bfs: {
     name: 'Breadth-First Search',
     paradigm: 'Graph Traversal',
@@ -304,6 +378,16 @@ const AlgoMeta = {
           It solves Single Source Shortest Path on non-negative weighted graphs optimally. 
           It fails with negative edge weights — use Bellman-Ford instead.`,
   },
+  bellmanford: {
+    name: 'Bellman-Ford',
+    paradigm: 'Dynamic Programming',
+    best: 'O(VE)',
+    avg: 'O(VE)',
+    worst: 'O(VE)',
+    space: 'O(V)',
+    why: `Bellman-Ford relaxes every edge V-1 times, so it is slower than Dijkstra but safer when negative edges exist.
+          It can also detect negative cycles, which makes it the fallback shortest-path algorithm when weights are not all non-negative.`,
+  },
   floyd: {
     name: 'Floyd-Warshall',
     paradigm: 'Dynamic Programming',
@@ -314,6 +398,26 @@ const AlgoMeta = {
     why: `Floyd-Warshall computes all-pairs shortest paths using DP. For every pair (i,j), it checks if 
           going through intermediate node k gives a shorter path. Simple to implement but O(V³) makes it 
           impractical for large sparse graphs.`,
+  },
+  prim: {
+    name: "Prim's MST",
+    paradigm: 'Greedy',
+    best: 'O(E log V)',
+    avg: 'O(E log V)',
+    worst: 'O(V²)',
+    space: 'O(V)',
+    why: `Prim's algorithm grows a minimum spanning tree one cheapest edge at a time from a starting node.
+          It is excellent for dense graphs and helps explain the difference between shortest-path trees and spanning trees.`,
+  },
+  kruskal: {
+    name: "Kruskal's MST",
+    paradigm: 'Greedy + DSU',
+    best: 'O(E log E)',
+    avg: 'O(E log E)',
+    worst: 'O(E log E)',
+    space: 'O(V)',
+    why: `Kruskal sorts edges by weight and keeps the ones that do not form a cycle.
+          It is a clean demonstration of greedy choice plus disjoint-set union for cycle detection.`,
   },
   knapsack_dp: {
     name: '0/1 Knapsack (DP)',
@@ -349,6 +453,16 @@ const AlgoMeta = {
           Time complexity grows factorially — for n=12, there are 14,200 solutions found 
           through millions of recursive calls.`,
   },
+  binarysearch: {
+    name: 'Binary Search',
+    paradigm: 'Divide & Conquer',
+    best: 'O(1)',
+    avg: 'O(log n)',
+    worst: 'O(log n)',
+    space: 'O(1)',
+    why: `Binary Search repeatedly cuts a sorted search space in half.
+          It is one of the clearest examples of logarithmic growth and shows why sorted data structures are so powerful.`,
+  },
   tsp: {
     name: 'TSP (Branch & Bound)',
     paradigm: 'Branch & Bound',
@@ -371,6 +485,46 @@ const AlgoMeta = {
           Only when hashes match does it verify the match character-by-character. 
           Extremely efficient for multiple pattern matching and plagiarism detection. 
           Worst case O(nm) occurs with hash collisions.`,
+  },
+  kmp: {
+    name: 'KMP Pattern Matching',
+    paradigm: 'Failure Function',
+    best: 'O(n + m)',
+    avg: 'O(n + m)',
+    worst: 'O(n + m)',
+    space: 'O(m)',
+    why: `KMP preprocesses the pattern into an LPS table, which tells the algorithm how far it can shift without rechecking known matches.
+          That gives it a guaranteed linear-time scan even on adversarial input.`,
+  },
+  huffman: {
+    name: 'Huffman Coding',
+    paradigm: 'Greedy',
+    best: 'O(n log n)',
+    avg: 'O(n log n)',
+    worst: 'O(n log n)',
+    space: 'O(n)',
+    why: `Huffman Coding repeatedly merges the two least frequent symbols to build an optimal prefix code.
+          It is a classic greedy algorithm used in compression systems such as ZIP and media codecs.`,
+  },
+  avl: {
+    name: 'AVL Tree',
+    paradigm: 'Balanced BST',
+    best: 'O(log n)',
+    avg: 'O(log n)',
+    worst: 'O(log n)',
+    space: 'O(n)',
+    why: `AVL trees rebalance aggressively after insertions and deletions so the height stays logarithmic.
+          They are ideal for teaching rotations and the tradeoff between balance strictness and update overhead.`,
+  },
+  redblack: {
+    name: 'Red-Black Tree',
+    paradigm: 'Balanced BST',
+    best: 'O(log n)',
+    avg: 'O(log n)',
+    worst: 'O(log n)',
+    space: 'O(n)',
+    why: `Red-Black trees maintain weaker balance than AVL trees but support fast updates with a smaller rebalancing cost.
+          They are widely used in standard libraries and operating systems.`,
   },
 };
 
@@ -441,12 +595,15 @@ function startViz() {
   hideAllViz();
   document.getElementById('vizPlaceholder').classList.add('hidden');
 
-  if (['quicksort','mergesort'].includes(algo)) runSortViz(algo);
-  else if (['bfs','dijkstra'].includes(algo))   runGraphViz(algo);
+  if (['quicksort','mergesort','heapsort'].includes(algo)) runSortViz(algo);
+  else if (['bfs','dijkstra','bellmanford','prim','kruskal'].includes(algo))   runGraphViz(algo);
   else if (algo === 'floyd')                    runFloydViz();
   else if (['knapsack_dp','knapsack_greedy'].includes(algo)) runKnapsackViz(algo);
+  else if (algo === 'binarysearch')             runBinarySearchViz();
   else if (algo === 'nqueens')                  runNQueensViz();
-  else if (algo === 'rabinkarp')                runRabinKarpViz();
+  else if (['rabinkarp', 'kmp'].includes(algo)) runStringMatchViz(algo);
+  else if (algo === 'huffman')                  runHuffmanViz();
+  else if (['avl', 'redblack'].includes(algo))  runTreeViz(algo);
   else if (algo === 'tsp')                      runTSPViz();
 }
 
@@ -550,15 +707,22 @@ async function runSortViz(algo) {
 
   document.getElementById('sortViz').classList.remove('hidden');
   renderBars(arr);
-  log(`Starting ${algo === 'quicksort' ? 'Quick Sort' : 'Merge Sort'} on ${n} elements`, 'highlight');
+  const labels = {
+    quicksort: 'Quick Sort',
+    mergesort: 'Merge Sort',
+    heapsort: 'Heap Sort',
+  };
+  log(`Starting ${labels[algo]} on ${n} elements`, 'highlight');
   if (customArr) log(`Using custom input: [${customArr.join(', ')}]`);
 
   const spd = () => Math.max(20, 600 / (State.vizSpeed * 2));
 
   if (algo === 'quicksort') {
     await quickSortViz(arr, 0, arr.length - 1, spd);
-  } else {
+  } else if (algo === 'mergesort') {
     await mergeSortViz(arr, 0, arr.length - 1, spd);
+  } else {
+    await heapSortViz(arr, spd);
   }
 
   renderBars(arr, [], [], arr.map((_,i) => i));
@@ -567,12 +731,43 @@ async function runSortViz(algo) {
   // Save to history
   addToHistory({
     category: 'sorting',
-    algo: algo === 'quicksort' ? 'Quick Sort' : 'Merge Sort',
+    algo: labels[algo],
     input: `Array of ${n}`,
     result: `Sorted in ${stepCounter} steps`,
     steps: stepCounter,
     time: Date.now(),
   });
+}
+
+async function heapSortViz(arr, spd) {
+  async function heapify(n, i) {
+    let largest = i;
+    const l = 2 * i + 1;
+    const r = 2 * i + 2;
+
+    if (l < n && arr[l] > arr[largest]) largest = l;
+    if (r < n && arr[r] > arr[largest]) largest = r;
+
+    if (largest !== i) {
+      [arr[i], arr[largest]] = [arr[largest], arr[i]];
+      renderBars(arr, [], [i, largest]);
+      log(`Heapify swap ${arr[largest]} with ${arr[i]}`);
+      await delay(spd());
+      await heapify(n, largest);
+    }
+  }
+
+  for (let i = Math.floor(arr.length / 2) - 1; i >= 0; i--) {
+    await heapify(arr.length, i);
+  }
+
+  for (let i = arr.length - 1; i > 0; i--) {
+    [arr[0], arr[i]] = [arr[i], arr[0]];
+    renderBars(arr, [], [0, i], Array.from({ length: arr.length - i }, (_, idx) => arr.length - 1 - idx));
+    log(`Move max element ${arr[i]} to sorted position ${i}`);
+    await delay(spd());
+    await heapify(i, 0);
+  }
 }
 
 async function quickSortViz(arr, low, high, spd) {
@@ -714,7 +909,14 @@ async function runGraphViz(algo) {
   const canvas = document.getElementById('graphCanvas');
   canvas.classList.remove('hidden');
   drawGraph();
-  log(`Starting ${algo.toUpperCase()} from node A`, 'highlight');
+  const graphLabels = {
+    bfs: 'BFS',
+    dijkstra: "Dijkstra's",
+    bellmanford: 'Bellman-Ford',
+    prim: "Prim's MST",
+    kruskal: "Kruskal's MST",
+  };
+  log(`Starting ${graphLabels[algo]} from node A`, 'highlight');
 
   const spd = () => Math.max(300, 1200 / State.vizSpeed);
 
@@ -740,8 +942,7 @@ async function runGraphViz(algo) {
       });
     }
     log('✓ BFS complete! All nodes visited.', 'success');
-  } else {
-    // DIJKSTRA
+  } else if (algo === 'dijkstra') {
     const n = SAMPLE_GRAPH.nodes.length;
     const dist = Array(n).fill(Infinity);
     const visited = [];
@@ -772,11 +973,68 @@ async function runGraphViz(algo) {
       await delay(spd() / 2);
     }
     log(`✓ Dijkstra done! Distances: ${SAMPLE_GRAPH.nodes.map((n,i)=>`${n.label}=${dist[i]}`).join(', ')}`, 'success');
+  } else if (algo === 'bellmanford') {
+    const n = SAMPLE_GRAPH.nodes.length;
+    const dist = Array(n).fill(Infinity);
+    dist[0] = 0;
+    const distances = { 0: 0 };
+
+    for (let pass = 0; pass < n - 1; pass++) {
+      log(`Pass ${pass + 1}: relax every edge`, 'highlight');
+      for (const edge of SAMPLE_GRAPH.edges) {
+        if (dist[edge.from] !== Infinity && dist[edge.from] + edge.w < dist[edge.to]) {
+          dist[edge.to] = dist[edge.from] + edge.w;
+          distances[edge.to] = dist[edge.to];
+          drawGraph([], edge.to, [[edge.from, edge.to]], distances);
+          log(`  Update ${SAMPLE_GRAPH.nodes[edge.to].label} to ${dist[edge.to]}`);
+          await delay(spd() / 2);
+        }
+      }
+    }
+    log(`✓ Bellman-Ford done! Negative edges would still be safe here.`, 'success');
+  } else if (algo === 'prim') {
+    const visited = new Set([0]);
+    const mst = [];
+    while (visited.size < SAMPLE_GRAPH.nodes.length) {
+      let best = null;
+      SAMPLE_GRAPH.edges.forEach(edge => {
+        const touchesVisited = visited.has(edge.from) || visited.has(edge.to);
+        const crossesCut = visited.has(edge.from) !== visited.has(edge.to);
+        if (touchesVisited && crossesCut && (!best || edge.w < best.w)) best = edge;
+      });
+      if (!best) break;
+      mst.push([best.from, best.to]);
+      visited.add(best.from);
+      visited.add(best.to);
+      drawGraph([...visited], best.to, mst);
+      log(`Take edge ${SAMPLE_GRAPH.nodes[best.from].label}-${SAMPLE_GRAPH.nodes[best.to].label} (w=${best.w})`);
+      await delay(spd());
+    }
+    log(`✓ Prim's MST complete with ${mst.length} edges.`, 'success');
+  } else if (algo === 'kruskal') {
+    const parent = Array.from({ length: SAMPLE_GRAPH.nodes.length }, (_, i) => i);
+    const find = x => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+    const union = (a, b) => { parent[find(a)] = find(b); };
+    const mst = [];
+    const edges = [...SAMPLE_GRAPH.edges].sort((a, b) => a.w - b.w);
+
+    for (const edge of edges) {
+      if (find(edge.from) !== find(edge.to)) {
+        union(edge.from, edge.to);
+        mst.push([edge.from, edge.to]);
+        drawGraph([], edge.to, mst);
+        log(`Keep edge ${SAMPLE_GRAPH.nodes[edge.from].label}-${SAMPLE_GRAPH.nodes[edge.to].label} (w=${edge.w})`);
+      } else {
+        log(`Skip edge ${SAMPLE_GRAPH.nodes[edge.from].label}-${SAMPLE_GRAPH.nodes[edge.to].label}; cycle detected`);
+      }
+      await delay(spd() / 2);
+    }
+    log(`✓ Kruskal's MST complete with ${mst.length} edges.`, 'success');
   }
 
   addToHistory({
     category: 'graph',
-    algo: algo === 'bfs' ? 'BFS' : "Dijkstra's",
+    algo: graphLabels[algo],
     input: '6-node weighted graph',
     result: `Traversal in ${stepCounter} steps`,
     steps: stepCounter,
@@ -990,68 +1248,233 @@ async function runNQueensViz() {
 }
 
 // ============================================================
-// RABIN-KARP VISUALIZER
+// BINARY SEARCH VISUALIZER
 // ============================================================
-async function runRabinKarpViz() {
+async function runBinarySearchViz() {
+  const div = document.getElementById('sortViz');
+  div.classList.remove('hidden');
+  const customArr = parseCustomArrayInput();
+  const arr = (customArr || genArray(+document.getElementById('inputSize').value)).sort((a, b) => a - b);
+  const target = arr[Math.floor(arr.length / 2)];
+  let lo = 0;
+  let hi = arr.length - 1;
+  const spd = () => Math.max(180, 700 / State.vizSpeed);
+
+  log(`Binary Search on sorted array for target ${target}`, 'highlight');
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    renderBars(arr, [mid], [], Array.from({ length: hi - lo + 1 }, (_, idx) => idx + lo));
+    log(`Check middle index ${mid} => ${arr[mid]}`);
+    await delay(spd());
+    if (arr[mid] === target) {
+      log(`✓ Found target ${target} at index ${mid}`, 'success');
+      break;
+    }
+    if (arr[mid] < target) lo = mid + 1;
+    else hi = mid - 1;
+  }
+
+  addToHistory({
+    category: 'search',
+    algo: 'Binary Search',
+    input: `Sorted array of ${arr.length}`,
+    result: `Target ${target} searched in ${stepCounter} steps`,
+    steps: stepCounter,
+    time: Date.now(),
+  });
+}
+
+// ============================================================
+// STRING MATCHING VISUALIZER
+// ============================================================
+async function runStringMatchViz(algo) {
   const div = document.getElementById('rkViz');
   div.classList.remove('hidden');
   const displayEl = document.getElementById('rkDisplay');
   const text = 'ABCACABCAB';
   const pattern = 'CAB';
   const spd = () => Math.max(150, 600 / State.vizSpeed);
-  const BASE = 31, MOD = 1e9+7;
-
-  log(`Rabin-Karp: text="${text}", pattern="${pattern}"`, 'highlight');
-
-  // Compute pattern hash
-  let phash = 0;
-  for(let c of pattern) phash = (phash * BASE + c.charCodeAt(0)) % MOD;
-
-  let whash = 0, power = 1;
-  for(let i=0;i<pattern.length;i++){
-    if(i>0) power = (power * BASE) % MOD;
-    whash = (whash * BASE + text.charCodeAt(i)) % MOD;
-  }
-
   const matches = [];
 
-  for(let i=0;i<=text.length-pattern.length;i++){
-    // Render current window
-    displayEl.innerHTML = `
-      <span class="rk-label">TEXT</span>
-      <div>
-        ${text.split('').map((c,j)=>{
-          let cls = '';
-          if(j>=i&&j<i+pattern.length) cls='window';
-          if(matches.includes(j-pattern.length+1)||matches.some(m=>j>=m&&j<m+pattern.length)) cls='match';
-          return `<span class="rk-char ${cls}">${c}</span>`;
-        }).join('')}
-      </div>
-      <span class="rk-label" style="margin-top:1rem">PATTERN (hash=${phash.toFixed(0)})</span>
-      <div>
-        ${' '.repeat(i*2)}${pattern.split('').map(c=>`<span class="rk-char">${c}</span>`).join('')}
-      </div>
-      <div style="margin-top:1rem;font-size:0.7rem;color:var(--text-secondary)">Window hash: ${whash.toFixed(0)} | ${whash===phash?'<span style="color:var(--success)">Hash Match!</span>':'No match'}</div>
-    `;
-    log(`i=${i}: window hash=${whash.toFixed(0)} vs pattern hash=${phash.toFixed(0)}`);
-    await delay(spd());
+  if (algo === 'rabinkarp') {
+    const BASE = 31, MOD = 1e9 + 7;
+    log(`Rabin-Karp: text="${text}", pattern="${pattern}"`, 'highlight');
 
-    if(whash === phash){
-      // Verify
-      if(text.substring(i,i+pattern.length) === pattern){
+    let phash = 0;
+    for (let c of pattern) phash = (phash * BASE + c.charCodeAt(0)) % MOD;
+
+    let whash = 0, power = 1;
+    for (let i = 0; i < pattern.length; i++) {
+      if (i > 0) power = (power * BASE) % MOD;
+      whash = (whash * BASE + text.charCodeAt(i)) % MOD;
+    }
+
+    for (let i = 0; i <= text.length - pattern.length; i++) {
+      displayEl.innerHTML = `
+        <span class="rk-label">TEXT</span>
+        <div>${text.split('').map((c, j) => {
+          let cls = '';
+          if (j >= i && j < i + pattern.length) cls = 'window';
+          if (matches.some(m => j >= m && j < m + pattern.length)) cls = 'match';
+          return `<span class="rk-char ${cls}">${c}</span>`;
+        }).join('')}</div>
+        <span class="rk-label" style="margin-top:1rem">PATTERN</span>
+        <div>${' '.repeat(i * 2)}${pattern.split('').map(c => `<span class="rk-char">${c}</span>`).join('')}</div>
+        <div style="margin-top:1rem;font-size:0.7rem;color:var(--text-secondary)">Window hash: ${whash.toFixed(0)} | ${whash === phash ? '<span style="color:var(--success)">Hash Match!</span>' : 'No match'}</div>
+      `;
+      log(`i=${i}: window hash=${whash.toFixed(0)} vs pattern hash=${phash.toFixed(0)}`);
+      await delay(spd());
+      if (whash === phash && text.substring(i, i + pattern.length) === pattern) {
         matches.push(i);
         log(`✓ Pattern found at index ${i}!`, 'success');
-      } else {
-        log(`Hash collision at ${i} — not a real match`, 'error');
+      }
+      if (i < text.length - pattern.length) {
+        whash = (whash - text.charCodeAt(i) * power % MOD + MOD) % MOD;
+        whash = (whash * BASE + text.charCodeAt(i + pattern.length)) % MOD;
       }
     }
-    // Rolling hash
-    if(i < text.length - pattern.length){
-      whash = (whash - text.charCodeAt(i) * power % MOD + MOD) % MOD;
-      whash = (whash * BASE + text.charCodeAt(i+pattern.length)) % MOD;
+  } else {
+    log(`KMP: text="${text}", pattern="${pattern}"`, 'highlight');
+    const lps = Array(pattern.length).fill(0);
+    for (let i = 1, len = 0; i < pattern.length;) {
+      if (pattern[i] === pattern[len]) lps[i++] = ++len;
+      else if (len) len = lps[len - 1];
+      else lps[i++] = 0;
+    }
+    let i = 0, j = 0;
+    while (i < text.length) {
+      displayEl.innerHTML = `
+        <span class="rk-label">TEXT</span>
+        <div>${text.split('').map((c, idx) => `<span class="rk-char ${idx === i ? 'window' : matches.some(m => idx >= m && idx < m + pattern.length) ? 'match' : ''}">${c}</span>`).join('')}</div>
+        <span class="rk-label" style="margin-top:1rem">PATTERN / LPS</span>
+        <div>${pattern.split('').map((c, idx) => `<span class="rk-char ${idx === j ? 'window' : ''}">${c}</span>`).join('')}</div>
+        <div style="margin-top:1rem;font-size:0.7rem;color:var(--text-secondary)">LPS: [${lps.join(', ')}]</div>
+      `;
+      log(`Compare text[${i}] and pattern[${j}]`);
+      await delay(spd());
+      if (text[i] === pattern[j]) {
+        i++;
+        j++;
+        if (j === pattern.length) {
+          matches.push(i - j);
+          log(`✓ KMP match found at index ${i - j}`, 'success');
+          j = lps[j - 1];
+        }
+      } else if (j) {
+        j = lps[j - 1];
+      } else {
+        i++;
+      }
     }
   }
-  log(`✓ Rabin-Karp done! ${matches.length} match(es) at index: ${matches.join(', ')||'none'}`, 'success');
+  log(`✓ ${algo === 'rabinkarp' ? 'Rabin-Karp' : 'KMP'} done! Matches: ${matches.join(', ') || 'none'}`, 'success');
+
+  addToHistory({
+    category: 'string',
+    algo: algo === 'rabinkarp' ? 'Rabin-Karp' : 'KMP Algorithm',
+    input: `"${text}" vs "${pattern}"`,
+    result: `${matches.length} matches`,
+    steps: stepCounter,
+    time: Date.now(),
+  });
+}
+
+// ============================================================
+// HUFFMAN CODING VISUALIZER
+// ============================================================
+async function runHuffmanViz() {
+  const dpDiv = document.getElementById('dpViz');
+  dpDiv.classList.remove('hidden');
+  const wrap = document.getElementById('dpTableWrap');
+  const text = 'BANANA_BANDANA';
+  const freq = {};
+  for (const char of text) freq[char] = (freq[char] || 0) + 1;
+  const nodes = Object.entries(freq).map(([char, weight]) => ({ char, weight, label: char }));
+  const spd = () => Math.max(150, 600 / State.vizSpeed);
+
+  function renderQueue(queue) {
+    wrap.innerHTML = `
+      <table>
+        <tr><th>Node</th><th>Weight</th></tr>
+        ${queue.map(item => `<tr><td>${item.label}</td><td>${item.weight}</td></tr>`).join('')}
+      </table>
+    `;
+  }
+
+  let queue = [...nodes].sort((a, b) => a.weight - b.weight);
+  renderQueue(queue);
+  log(`Huffman coding for "${text}"`, 'highlight');
+  while (queue.length > 1) {
+    const left = queue.shift();
+    const right = queue.shift();
+    const merged = {
+      label: `${left.label}${right.label}`,
+      weight: left.weight + right.weight,
+    };
+    log(`Merge ${left.label}(${left.weight}) + ${right.label}(${right.weight})`);
+    queue.push(merged);
+    queue.sort((a, b) => a.weight - b.weight);
+    renderQueue(queue);
+    await delay(spd());
+  }
+  log('✓ Huffman tree built. Lowest-frequency symbols ended deepest in the tree.', 'success');
+
+  addToHistory({
+    category: 'compression',
+    algo: 'Huffman Coding',
+    input: text,
+    result: `Built code tree in ${stepCounter} steps`,
+    steps: stepCounter,
+    time: Date.now(),
+  });
+}
+
+// ============================================================
+// BALANCED TREE VISUALIZER
+// ============================================================
+async function runTreeViz(algo) {
+  const dpDiv = document.getElementById('dpViz');
+  dpDiv.classList.remove('hidden');
+  const wrap = document.getElementById('dpTableWrap');
+  const values = [30, 20, 40, 10, 25, 35, 50, 5];
+  const spd = () => Math.max(140, 550 / State.vizSpeed);
+  const states = [];
+
+  if (algo === 'avl') {
+    states.push('Insert 30, 20, 40');
+    states.push('Insert 10 -> tree becomes left-heavy');
+    states.push('Rotate right at 30 to restore AVL balance');
+    states.push('Insert 25, 35, 50');
+    states.push('Insert 5 -> balance factors remain in [-1, 1]');
+  } else {
+    states.push('Insert 30 as black root');
+    states.push('Insert 20 as red child');
+    states.push('Insert 40 as red child');
+    states.push('Insert 10 -> recolor and rotate to maintain red-black rules');
+    states.push('Insert 25, 35, 50 -> black height stays balanced');
+  }
+
+  log(`${algo === 'avl' ? 'AVL Tree' : 'Red-Black Tree'} inserts: ${values.join(', ')}`, 'highlight');
+  for (let idx = 0; idx < states.length; idx++) {
+    wrap.innerHTML = `
+      <table>
+        <tr><th>Step</th><th>State</th></tr>
+        ${states.map((state, i) => `<tr><td>${i + 1}</td><td class="${i === idx ? 'dp-active' : i < idx ? 'dp-filled' : ''}">${state}</td></tr>`).join('')}
+      </table>
+    `;
+    log(states[idx]);
+    await delay(spd());
+  }
+  log(`✓ ${algo === 'avl' ? 'AVL' : 'Red-Black'} balancing demo complete.`, 'success');
+
+  addToHistory({
+    category: 'tree',
+    algo: algo === 'avl' ? 'AVL Tree' : 'Red-Black Tree',
+    input: values.join(', '),
+    result: 'Balanced tree rotations demonstrated',
+    steps: stepCounter,
+    time: Date.now(),
+  });
 }
 
 // ============================================================
@@ -1495,6 +1918,14 @@ const SUGGESTION_DB = [
     ]
   },
   {
+    keywords: ['binary','search','sorted','lookup','find value','logarithmic'],
+    suggestions: [
+      {name:'Binary Search',paradigm:'Divide & Conquer',score:96,complexity:'O(log n)',reason:'Best when the data is already sorted and you need exact lookup. Each comparison removes half the search space.'},
+      {name:'AVL Tree',paradigm:'Balanced BST',score:82,complexity:'O(log n)',reason:'Good when you need many searches and updates while keeping keys ordered. AVL trees provide strict logarithmic lookup.'},
+      {name:'Red-Black Tree',paradigm:'Balanced BST',score:80,complexity:'O(log n)',reason:'A more update-friendly balanced tree than AVL. Used in many standard map/set implementations.'},
+    ]
+  },
+  {
     keywords: ['pattern','match','search','find','text','string','substring','occurrence'],
     suggestions: [
       {name:'Rabin-Karp',paradigm:'Hashing',score:90,complexity:'O(n+m) avg',reason:'Uses rolling hash for O(n+m) average case. Ideal for multiple pattern search or plagiarism detection. Hash collisions cause O(nm) worst case.'},
@@ -1524,11 +1955,38 @@ const SUGGESTION_DB = [
       {name:'DFS (Depth-First Search)',paradigm:'Graph Traversal',score:85,complexity:'O(V+E)',reason:'Explore as deep as possible before backtracking. Use for: topological sort, cycle detection, connected components, maze solving.'},
     ]
   },
+  {
+    keywords: ['compression','encode','prefix','huffman','frequency','zip'],
+    suggestions: [
+      {name:'Huffman Coding',paradigm:'Greedy',score:94,complexity:'O(n log n)',reason:'Optimal prefix coding for symbol frequencies. Great for demonstrating how greedy merging creates smaller encodings.'},
+      {name:'Run-Length Encoding',paradigm:'Encoding',score:72,complexity:'O(n)',reason:'Useful when repeated symbols are common. Simpler than Huffman but less adaptive to mixed frequencies.'},
+    ]
+  },
 ];
 
 function fillSuggest(text) {
   document.getElementById('suggestInput').value = text;
   document.getElementById('btnSuggest').click();
+}
+
+function algoKeyFromSuggestionName(name) {
+  const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+  const map = {
+    quicksort: 'quicksort',
+    mergesort: 'mergesort',
+    heapsort: 'heapsort',
+    dijkstrasalgorithm: 'dijkstra',
+    bellmanford: 'bellmanford',
+    floydwarshall: 'floyd',
+    bfsbreadthfirstsearch: 'bfs',
+    binarysearch: 'binarysearch',
+    rabinkarp: 'rabinkarp',
+    kmpalgorithm: 'kmp',
+    huffmancoding: 'huffman',
+    avltree: 'avl',
+    redblacktree: 'redblack',
+  };
+  return map[normalized] || '';
 }
 
 function initSuggest() {
@@ -1562,7 +2020,7 @@ function runSuggest() {
   }
 
   resultsEl.innerHTML = bestMatch.suggestions.map((s, i) => `
-    <div class="suggestion-card ${i===0?'primary-suggestion':''}" onclick="navigateTo('visualize','${s.name.toLowerCase().replace(/\s/g,'')}')">
+    <div class="suggestion-card ${i===0?'primary-suggestion':''}" onclick="navigateTo('visualize','${algoKeyFromSuggestionName(s.name)}')">
       <div class="sg-score">${s.score}%</div>
       <div class="sg-rank">${i===0?'⭐ BEST MATCH':'Alternative #'+(i+1)}</div>
       <div class="sg-name">${s.name}</div>
@@ -1688,6 +2146,9 @@ function rerunHistory(id) {
       'Quick Sort':'quicksort','Merge Sort':'mergesort','BFS':'bfs',
       "Dijkstra's":'dijkstra','0/1 Knapsack DP':'knapsack_dp',
       'Greedy Knapsack':'knapsack_greedy','N-Queens Backtracking':'nqueens',
+      'Heap Sort':'heapsort','Bellman-Ford':'bellmanford',"Prim's MST":'prim',
+      "Kruskal's MST":'kruskal','Binary Search':'binarysearch','Rabin-Karp':'rabinkarp',
+      'KMP Algorithm':'kmp','Huffman Coding':'huffman','AVL Tree':'avl','Red-Black Tree':'redblack',
     };
     const algoKey = algoMap[item.algo];
     if(algoKey) {
@@ -1756,27 +2217,33 @@ function initHistory() {
 // ============================================================
 // AUTH (LOGIN / SIGNUP)
 // ============================================================
-function setAuth(token, userId) {
+function setAuth(token, userId, expiresAt = '') {
   State.auth.token = token || '';
   State.auth.userId = userId || '';
+  State.auth.expiresAt = expiresAt || '';
   localStorage.setItem('algolab_token', State.auth.token);
   localStorage.setItem('algolab_user', State.auth.userId);
+  localStorage.setItem('algolab_expires_at', State.auth.expiresAt);
   loadPresets();
   renderPresets();
   updateAuthUI();
   apiHistory();
+  loadAnalytics();
 }
 
 function clearAuth() {
   State.auth.token = '';
   State.auth.userId = '';
+  State.auth.expiresAt = '';
   State.history = [];
   localStorage.removeItem('algolab_token');
   localStorage.removeItem('algolab_user');
+  localStorage.removeItem('algolab_expires_at');
   loadPresets();
   renderPresets();
   updateAuthUI();
   renderHistory();
+  loadAnalytics();
 }
 
 function updateAuthUI() {
@@ -1784,7 +2251,11 @@ function updateAuthUI() {
   if (navAuth) navAuth.textContent = State.auth.userId ? `User: ${State.auth.userId}` : 'Guest';
 
   const authStatus = document.getElementById('authStatus');
-  if (authStatus) authStatus.textContent = State.auth.userId ? `Logged in as ${State.auth.userId}` : 'Not logged in';
+  if (authStatus) {
+    authStatus.textContent = State.auth.userId
+      ? `Logged in as ${State.auth.userId}${State.auth.expiresAt ? ` • session until ${new Date(State.auth.expiresAt).toLocaleString()}` : ''}`
+      : 'Not logged in';
+  }
 
   const logoutBtn = document.getElementById('btnLogout');
   if (logoutBtn) logoutBtn.style.display = State.auth.userId ? 'inline-flex' : 'none';
@@ -1794,6 +2265,7 @@ function initAuth() {
   const tabs = document.querySelectorAll('.auth-tab');
   const loginForm = document.getElementById('loginForm');
   const signupForm = document.getElementById('signupForm');
+  const resetForm = document.getElementById('resetForm');
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -1802,6 +2274,7 @@ function initAuth() {
       const target = tab.dataset.authTab;
       if (loginForm) loginForm.classList.toggle('active', target === 'login');
       if (signupForm) signupForm.classList.toggle('active', target === 'signup');
+      if (resetForm) resetForm.classList.toggle('active', target === 'reset');
     });
   });
 
@@ -1820,7 +2293,7 @@ function initAuth() {
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
-        setAuth(data.token, data.userId);
+        setAuth(data.token, data.userId, data.expiresAt);
         showToast('Login successful!', 'success');
         navigateTo('history');
       } catch (err) {
@@ -1855,6 +2328,32 @@ function initAuth() {
         document.getElementById('signupConfirmPassword').value = '';
       } catch (err) {
         showToast(err.message || 'Signup failed', 'error');
+      }
+    });
+  }
+
+  if (resetForm) {
+    resetForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const userId = document.getElementById('resetUserId').value.trim();
+      const password = document.getElementById('resetPassword').value.trim();
+      const confirmPassword = document.getElementById('resetConfirmPassword').value.trim();
+      if (!userId || !password) return showToast('Enter userId and new password', 'error');
+      if (password !== confirmPassword) return showToast('Passwords do not match', 'error');
+
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, password }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Reset failed');
+        showToast('Password reset successful. Please login.', 'success');
+        document.querySelector('[data-auth-tab="login"]')?.click();
+        document.getElementById('loginUserId').value = userId;
+      } catch (err) {
+        showToast(err.message || 'Reset failed', 'error');
       }
     });
   }
@@ -1956,9 +2455,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initHistory();
   initAuth();
   updateHistorySummary();
+  validateSession();
 
   // Try to load history from API (non-blocking)
   apiHistory();
+  loadAnalytics();
 
   // Chart.js global defaults
   Chart.defaults.color = '#8892b0';

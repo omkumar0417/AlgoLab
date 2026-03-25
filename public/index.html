@@ -24,6 +24,7 @@
     <li><a href="#" class="nav-link" data-page="compare">Compare</a></li>
     <li><a href="#" class="nav-link" data-page="suggest">Suggest</a></li>
     <li><a href="#" class="nav-link" data-page="history">History</a></li>
+    <li><a href="#" class="nav-link" data-page="analytics">Analytics</a></li>
     <li><a href="#" class="nav-link" data-page="auth">Login</a></li>
   </ul>
   <div class="nav-status">
@@ -192,20 +193,29 @@
           <optgroup label="Sorting">
             <option value="quicksort">Quick Sort</option>
             <option value="mergesort">Merge Sort</option>
+            <option value="heapsort">Heap Sort</option>
           </optgroup>
           <optgroup label="Graph">
             <option value="bfs">BFS Traversal</option>
             <option value="dijkstra">Dijkstra's SSSP</option>
+            <option value="bellmanford">Bellman-Ford</option>
             <option value="floyd">Floyd-Warshall</option>
+            <option value="prim">Prim's MST</option>
+            <option value="kruskal">Kruskal's MST</option>
           </optgroup>
           <optgroup label="Knapsack">
             <option value="knapsack_dp">Knapsack (DP)</option>
             <option value="knapsack_greedy">Knapsack (Greedy)</option>
           </optgroup>
           <optgroup label="Classic">
+            <option value="binarysearch">Binary Search</option>
             <option value="nqueens">N-Queens</option>
             <option value="tsp">TSP (Branch & Bound)</option>
             <option value="rabinkarp">Rabin-Karp</option>
+            <option value="kmp">KMP Pattern Matching</option>
+            <option value="huffman">Huffman Coding</option>
+            <option value="avl">AVL Tree</option>
+            <option value="redblack">Red-Black Tree</option>
           </optgroup>
         </select>
       </div>
@@ -464,6 +474,45 @@
   </div>
 </div>
 
+<!-- ===== PAGE: ANALYTICS ===== -->
+<div class="page" id="page-analytics">
+  <div class="page-header">
+    <div class="section-tag">// DEMO ANALYTICS</div>
+    <h2>Admin / Analytics Panel</h2>
+    <p>Useful for college demos: show platform activity, popular algorithms, and common problem categories.</p>
+  </div>
+
+  <div class="history-dashboard">
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Total Users</div>
+      <div class="summary-value" id="analyticsUsers">0</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Tracked Runs</div>
+      <div class="summary-value" id="analyticsRuns">0</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Top Algorithm</div>
+      <div class="summary-value" id="analyticsTopAlgo">—</div>
+    </div>
+    <div class="glass-panel summary-card">
+      <div class="summary-label">Top Problem Type</div>
+      <div class="summary-value" id="analyticsTopType">—</div>
+    </div>
+  </div>
+
+  <div class="analytics-grid">
+    <div class="glass-panel analytics-list">
+      <div class="chart-title">// MOST RUN ALGORITHMS</div>
+      <div id="analyticsAlgorithms">Login to load analytics.</div>
+    </div>
+    <div class="glass-panel analytics-list">
+      <div class="chart-title">// COMMON PROBLEM TYPES</div>
+      <div id="analyticsTypes">Login to load analytics.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PAGE: AUTH ===== -->
 <div class="page" id="page-auth">
   <div class="page-header">
@@ -477,6 +526,7 @@
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-tab="login">Login</button>
         <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
+        <button class="auth-tab" data-auth-tab="reset">Reset</button>
       </div>
 
       <form id="loginForm" class="auth-form active">
@@ -495,6 +545,16 @@
         <label>Confirm Password</label>
         <input type="password" class="glass-input" id="signupConfirmPassword" placeholder="repeat password" />
         <button class="btn-primary" type="submit">Create Account</button>
+      </form>
+
+      <form id="resetForm" class="auth-form">
+        <label>User ID</label>
+        <input type="text" class="glass-input" id="resetUserId" placeholder="your_id" />
+        <label>New Password</label>
+        <input type="password" class="glass-input" id="resetPassword" placeholder="new password" />
+        <label>Confirm New Password</label>
+        <input type="password" class="glass-input" id="resetConfirmPassword" placeholder="repeat new password" />
+        <button class="btn-primary" type="submit">Reset Password</button>
       </form>
 
       <div class="auth-actions">
