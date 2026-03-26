@@ -1275,7 +1275,9 @@ body::before {
   font-size: 0.83rem;
 }
 .chart-box {
-  padding: 1rem;
+  background: var(--glass-bg) !important;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
 }
 .chart-box canvas {
   width: 100% !important;
@@ -1339,11 +1341,6 @@ body::before {
   font-size: 0.76rem;
 }
 
-.chart-box {
-  background: var(--glass-bg) !important;
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-}
 .chart-title {
   font-size: 0.7rem;
   color: var(--accent);
@@ -1967,7 +1964,6 @@ body::before {
   .viz-layout, .compare-layout, .suggest-layout {
     grid-template-columns: 1fr;
   }
-  .compare-guide,
   .compare-summary-grid {
     grid-template-columns: 1fr;
   }

@@ -2531,7 +2531,8 @@ function renderCompareCards(results) {
   `).join('');
 }
 
-let timeBarChart=null, stepsChart=null, growthChart=null;
+let timeBarChart = null;
+let stepsChart = null;
 
 function renderCompareCharts(results, cat, size) {
   const labels = results.map(r => r.name);
@@ -2564,10 +2565,6 @@ function renderCompareCharts(results, cat, size) {
     options:{...chartDefaults},
   });
 
-  if (growthChart) {
-    growthChart.destroy();
-    growthChart = null;
-  }
 }
 
 function saveLastComparison() {
@@ -3280,6 +3277,4 @@ document.addEventListener('DOMContentLoaded', () => {
   Chart.defaults.color = '#8892b0';
   Chart.defaults.font.family = 'JetBrains Mono, monospace';
   Chart.defaults.font.size = 11;
-
-  console.log('%c[AlgoLab] Ready ⚡', 'color:#00e5ff;font-size:14px;font-weight:bold');
 });
