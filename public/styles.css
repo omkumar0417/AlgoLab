@@ -1928,26 +1928,206 @@ body::before {
   }
 }
 @media (max-width: 600px) {
-  .navbar { padding: 1rem 1.25rem; }
-  .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; background: var(--bg-1); border-bottom: 1px solid var(--glass-border); flex-direction: column; padding: 1rem; z-index: 999; }
+  .navbar {
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+  }
+  .nav-logo {
+    font-size: 1.25rem;
+  }
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(5,8,16,0.97);
+    border-bottom: 1px solid var(--glass-border);
+    flex-direction: column;
+    padding: 0.85rem 1rem 1rem;
+    z-index: 999;
+    gap: 0.35rem;
+  }
   .nav-links.open { display: flex; }
-  .hamburger { display: block; }
+  .nav-link {
+    width: 100%;
+    text-align: left;
+    padding: 0.8rem 0.95rem;
+  }
+  .hamburger {
+    display: block;
+    margin-left: auto;
+    padding: 0.2rem 0.3rem;
+  }
   .nav-status { display: none; }
   .nav-auth { display: none; }
-  .page-header h2 { font-size: 1.75rem; }
+  .page {
+    padding-top: 72px;
+  }
+  .page-header {
+    padding: 2.25rem 1rem 1.35rem;
+  }
+  .page-header h2 {
+    font-size: 1.75rem;
+    line-height: 1.08;
+  }
+  .page-header p {
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
   .viz-layout, .compare-layout, .suggest-layout { padding: 0 1rem 3rem; }
   .history-dashboard { margin: 0 1rem 1rem; grid-template-columns: 1fr; }
   .analytics-grid { margin: 0 1rem 3rem; }
   .profile-layout { padding: 0 1rem 3rem; }
+  .profile-identity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .profile-name {
+    font-size: 1.25rem;
+  }
+  .profile-item,
+  .analytics-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
   .quick-actions { grid-template-columns: 1fr; }
-  .history-list { padding: 0 1rem 3rem; }
-  .history-toolbar { margin: 0 1rem 1rem; }
+  .history-list {
+    padding: 0 1rem 3rem;
+    grid-template-columns: 1fr;
+  }
+  .history-item {
+    padding: 1rem;
+  }
+  .history-toolbar {
+    margin: 0 1rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-toolbar .glass-input,
+  .history-toolbar .glass-select,
+  .history-toolbar .btn-ghost,
+  .history-toolbar .btn-primary {
+    width: 100%;
+    min-width: 0;
+  }
+  .hi-header,
+  .hi-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero {
+    min-height: auto;
+    gap: 2rem;
+    padding: 5.5rem 1rem 2.25rem;
+  }
   .hero-title { font-size: 2.2rem; }
+  .hero-sub {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 1.35rem;
+  }
   .hero-cta { flex-direction: column; }
   .hero-chips { gap: 0.5rem; }
   .hero-chip { width: fit-content; max-width: 100%; }
+  .hero-stats {
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    margin-top: 1.35rem;
+  }
+  .feature-strip,
+  .paradigms-section,
+  .failure-teaser {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .feature-tile,
+  .paradigm-card,
+  .failure-card {
+    padding: 1.1rem;
+  }
+  .viz-canvas-area {
+    min-height: 300px;
+    padding: 1rem;
+  }
+  .sort-viz,
+  .graph-canvas {
+    height: 240px !important;
+  }
+  #treeSvg {
+    height: 220px;
+  }
+  .tree-viz,
+  .rk-viz,
+  .dp-viz {
+    padding: 0.5rem;
+  }
+  #rkDisplay {
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    line-height: 2.1;
+    overflow-x: auto;
+  }
+  .rk-char {
+    width: 1.35rem;
+    padding: 0.2rem;
+  }
+  .compare-summary-grid,
+  .compare-charts,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .compare-cards {
+    grid-template-columns: 1fr;
+  }
+  .compare-summary-pill,
+  .result-card,
+  .chart-box,
+  .analytics-list,
+  .profile-section,
+  .summary-card,
+  .glass-panel {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .chart-box canvas,
+  .analytics-chart canvas,
+  #bigOChart {
+    height: 190px !important;
+    max-height: 190px;
+  }
+  .failure-showcase {
+    padding: 1.1rem;
+  }
+  .failure-showcase .counterexample {
+    font-size: 0.72rem;
+    line-height: 1.75;
+    overflow-x: auto;
+  }
+  .suggest-input-area .glass-textarea {
+    min-height: 180px;
+  }
+  .complexity-section {
+    margin: 0 1rem 3rem;
+  }
   .viz-btns { grid-template-columns: 1fr 1fr; }
   .auth-card { padding: 1.25rem; border-radius: 22px; }
+  .auth-tabs {
+    gap: 0.35rem;
+  }
+  .auth-tab {
+    padding: 0.7rem 0.45rem;
+    font-size: 0.72rem;
+  }
+  .auth-hero h3 {
+    font-size: 1.3rem;
+  }
+  .auth-hero p,
+  .auth-footnote,
+  .auth-status {
+    font-size: 0.8rem;
+  }
 }
 
 /* ================================================

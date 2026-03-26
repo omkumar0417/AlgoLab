@@ -3192,16 +3192,19 @@ function hideLoader() { document.getElementById('loadingOverlay').classList.remo
 // NAVBAR
 // ============================================================
 function initNav() {
+  const navLinks = document.querySelector('.nav-links');
+  const hamburger = document.getElementById('hamburger');
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
       navigateTo(link.dataset.page);
-      document.getElementById('hamburger').nextElementSibling?.classList.remove('open');
-      document.querySelector('.nav-links').classList.remove('open');
+      navLinks?.classList.remove('open');
+      hamburger?.setAttribute('aria-expanded', 'false');
     });
   });
-  document.getElementById('hamburger').addEventListener('click', () => {
-    document.querySelector('.nav-links').classList.toggle('open');
+  hamburger?.addEventListener('click', () => {
+    const isOpen = navLinks?.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', String(!!isOpen));
   });
   // Navbar scroll effect
   window.addEventListener('scroll', () => {
