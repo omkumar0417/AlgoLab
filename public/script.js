@@ -120,16 +120,6 @@ function getCustomNumbers(raw = getCustomInputRaw()) {
     .filter(Number.isFinite);
 }
 
-function getCustomText(raw = getCustomInputRaw()) {
-  return raw.replace(/[,\n]+/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function getCustomTextPair(raw = getCustomInputRaw()) {
-  const parts = raw.split(/\s*\|\s*|\n+/).map(s => s.trim()).filter(Boolean);
-  if (parts.length >= 2) return { left: parts[0], right: parts[1] };
-  return { left: raw.trim(), right: '' };
-}
-
 function updateCustomInputHint(algo) {
   const input = document.getElementById('customInput');
   const hint = document.getElementById('customInputHint');
@@ -138,7 +128,6 @@ function updateCustomInputHint(algo) {
   const hints = {
     quicksort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
     mergesort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
-    heapsort: ['e.g. 5,3,8,1,9,2', 'Use comma-separated numbers for sorting.'],
     bfs: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
     dijkstra: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
     bellmanford: ['e.g. 4,8,2,6,10,3,7,5,9', 'Numbers will remap graph edge weights.'],
@@ -149,9 +138,6 @@ function updateCustomInputHint(algo) {
     binarysearch: ['e.g. 1,3,5,7,9,11', 'Use a sorted list of numbers.'],
     nqueens: ['e.g. 8', 'Enter one number: board size N.'],
     tsp: ['e.g. 100:100, 300:60, 500:120, 400:260, 150:260', 'Use x:y coordinate pairs for city positions.'],
-    floyd: ['e.g. 0,3,999,7 / 8,0,2,999 / 5,999,0,1 / 2,999,999,0', 'Use a square matrix of numbers; 999 means no edge.'],
-    rabinkarp: ['e.g. hello world | world', 'Use text | pattern, or put text on the first line and pattern on the second.'],
-    kmp: ['e.g. hello world | world', 'Use text | pattern, or put text on the first line and pattern on the second.'],
     huffman: ['e.g. BANANA_BANDANA', 'Type the text to compress with Huffman coding.'],
     avl: ['e.g. 30,20,40,10,25,35,50,5', 'Use numbers to animate AVL insertions.'],
     redblack: ['e.g. 30,20,40,10,25,35,50,5', 'Use numbers to animate Red-Black insertions.'],
@@ -166,7 +152,6 @@ function getAlgorithmParadigm(algoName) {
   const map = {
     'Quick Sort': 'Divide & Conquer',
     'Merge Sort': 'Divide & Conquer',
-    'Heap Sort': 'Heap / Selection',
     'BFS': 'Graph Traversal',
     "Dijkstra's": 'Greedy',
     'Bellman-Ford': 'Dynamic Programming',
@@ -176,8 +161,6 @@ function getAlgorithmParadigm(algoName) {
     'Greedy Knapsack': 'Greedy',
     'Binary Search': 'Divide & Conquer',
     'N-Queens Backtracking': 'Backtracking',
-    'Rabin-Karp': 'Hashing',
-    'KMP Algorithm': 'Failure Function',
     'Huffman Coding': 'Greedy',
     'AVL Tree': 'Balanced BST',
     'Red-Black Tree': 'Balanced BST',
@@ -348,28 +331,6 @@ function getCustomTreeValues() {
   return nums.length ? nums.map(n => Math.round(n)) : null;
 }
 
-function getCustomFloydMatrix() {
-  const raw = getCustomInputRaw();
-  if (!raw) return null;
-
-  const rows = raw
-    .replace(/\r/g, '\n')
-    .split(/[;\n]+/)
-    .map(row => row.trim())
-    .filter(Boolean)
-    .map(row => row.split(/\s*,\s*/).map(val => Number(val.trim())))
-    .filter(row => row.length > 0 && row.every(Number.isFinite));
-
-  if (rows.length < 3) return null;
-  const size = rows[0].length;
-  if (!rows.every(row => row.length === size) || rows.length !== size) return null;
-
-  return {
-    labels: Array.from({ length: size }, (_, i) => String.fromCharCode(65 + i)),
-    dist: rows.map(row => row.map(v => (v >= 999 ? 999 : Math.max(0, Math.round(v))))),
-  };
-}
-
 function getCustomTspCities() {
   const raw = getCustomInputRaw();
   if (!raw) return null;
@@ -435,14 +396,6 @@ function buildTspCities(customCities) {
     cities.push({ ...next, l: String.fromCharCode(65 + cities.length) });
   }
   return cities;
-}
-
-function getCustomStringMatchInput() {
-  const raw = getCustomInputRaw();
-  if (!raw) return null;
-  const parts = raw.split(/\s*\|\s*|\n+/).map(s => s.trim()).filter(Boolean);
-  if (parts.length >= 2) return { text: parts[0], pattern: parts[1] };
-  return { text: raw.trim(), pattern: '' };
 }
 
 function updateHistorySummary() {
@@ -722,11 +675,10 @@ function renderProfileDashboard() {
   if (State.history.some(item => item.comparison)) achievements.push('Comparison analyst');
   if (presetCount >= 3) achievements.push('Preset planner');
 
-  const allCategories = ['sorting', 'graph', 'knapsack', 'string', 'compression', 'tree', 'search'];
+  const allCategories = ['sorting', 'graph', 'knapsack', 'compression', 'tree', 'search'];
   const missingCategories = allCategories.filter(item => !coveredCategories.includes(item));
   const recommendations = [];
   if (missingCategories.includes('graph')) recommendations.push('Try Bellman-Ford or Prim to broaden your graph toolkit.');
-  if (missingCategories.includes('string')) recommendations.push('Run KMP after Rabin-Karp to compare linear string matching strategies.');
   if (missingCategories.includes('compression')) recommendations.push('Explore Huffman Coding to add a greedy compression example.');
   if (!recommendations.length) recommendations.push('You have broad coverage already. Save more comparisons to deepen your insights.');
 
@@ -776,7 +728,7 @@ function getComparisonInsight(results, cat, size) {
     return `${winner.name} looks best for this run, but the real decision is about correctness: DP guarantees the optimal value, while Greedy can miss the best set of items even when it feels faster.`;
   }
   if (cat === 'shortestpath') {
-    return `${winner.name} is the most efficient here, but the graph type matters more than raw time. BFS is best for unweighted graphs, Dijkstra for non-negative weights, and Floyd-Warshall when you need every pair distance.`;
+    return `${winner.name} is the most efficient here, but the graph type matters more than raw time. BFS is best for unweighted graphs, while Dijkstra is the better fit for non-negative weighted graphs.`;
   }
   if (cat === 'failure') {
     return 'The failure dashboard shows why raw speed is not enough. Some algorithms appear fast until the wrong input shape exposes a bad pivot rule, greedy shortcut, or exponential search tree.';
@@ -866,17 +818,6 @@ const AlgoMeta = {
           then merging. It is stable and predictable — preferred for linked lists or external sorting — 
           but uses O(n) extra space unlike Quick Sort.`,
   },
-  heapsort: {
-    name: 'Heap Sort',
-    paradigm: 'Heap / Selection',
-    best: 'O(n log n)',
-    avg: 'O(n log n)',
-    worst: 'O(n log n)',
-    space: 'O(1)',
-    why: `Heap Sort first builds a max heap, then repeatedly extracts the largest element to the end of the array.
-          It guarantees O(n log n) with constant extra space, which makes it dependable when memory is tight.
-          Its tradeoff is weaker cache locality and less practical speed than Quick Sort.`,
-  },
   bfs: {
     name: 'Breadth-First Search',
     paradigm: 'Graph Traversal',
@@ -908,17 +849,6 @@ const AlgoMeta = {
     space: 'O(V)',
     why: `Bellman-Ford relaxes every edge V-1 times, so it is slower than Dijkstra but safer when negative edges exist.
           It can also detect negative cycles, which makes it the fallback shortest-path algorithm when weights are not all non-negative.`,
-  },
-  floyd: {
-    name: 'Floyd-Warshall',
-    paradigm: 'Dynamic Programming',
-    best: 'O(V³)',
-    avg: 'O(V³)',
-    worst: 'O(V³)',
-    space: 'O(V²)',
-    why: `Floyd-Warshall computes all-pairs shortest paths using DP. For every pair (i,j), it checks if 
-          going through intermediate node k gives a shorter path. Simple to implement but O(V³) makes it 
-          impractical for large sparse graphs.`,
   },
   prim: {
     name: "Prim's MST",
@@ -994,28 +924,6 @@ const AlgoMeta = {
     why: `TSP finds the minimum-cost Hamiltonian cycle. Branch & Bound prunes branches whose lower 
           bound exceeds the best known solution. Much better than brute force but still exponential 
           in worst case. For n > 20, approximate algorithms (Christofides) are preferred.`,
-  },
-  rabinkarp: {
-    name: 'Rabin-Karp',
-    paradigm: 'String Matching / Hashing',
-    best: 'O(n+m)',
-    avg: 'O(n+m)',
-    worst: 'O(nm)',
-    space: 'O(1)',
-    why: `Rabin-Karp uses rolling hash to slide a window over text, comparing hash values first. 
-          Only when hashes match does it verify the match character-by-character. 
-          Extremely efficient for multiple pattern matching and plagiarism detection. 
-          Worst case O(nm) occurs with hash collisions.`,
-  },
-  kmp: {
-    name: 'KMP Pattern Matching',
-    paradigm: 'Failure Function',
-    best: 'O(n + m)',
-    avg: 'O(n + m)',
-    worst: 'O(n + m)',
-    space: 'O(m)',
-    why: `KMP preprocesses the pattern into an LPS table, which tells the algorithm how far it can shift without rechecking known matches.
-          That gives it a guaranteed linear-time scan even on adversarial input.`,
   },
   huffman: {
     name: 'Huffman Coding',
@@ -1119,20 +1027,18 @@ function startViz() {
   hideAllViz();
   document.getElementById('vizPlaceholder').classList.add('hidden');
 
-  if (['quicksort','mergesort','heapsort'].includes(algo)) runSortViz(algo);
+  if (['quicksort','mergesort'].includes(algo)) runSortViz(algo);
   else if (['bfs','dijkstra','bellmanford','prim','kruskal'].includes(algo))   runGraphViz(algo);
-  else if (algo === 'floyd')                    runFloydViz();
   else if (['knapsack_dp','knapsack_greedy'].includes(algo)) runKnapsackViz(algo);
   else if (algo === 'binarysearch')             runBinarySearchViz();
   else if (algo === 'nqueens')                  runNQueensViz();
-  else if (['rabinkarp', 'kmp'].includes(algo)) runStringMatchViz(algo);
   else if (algo === 'huffman')                  runHuffmanViz();
   else if (['avl', 'redblack'].includes(algo))  runTreeViz(algo);
   else if (algo === 'tsp')                      runTSPViz();
 }
 
 function hideAllViz() {
-  ['sortViz','graphCanvas','dpViz','treeViz','nqueensViz','rkViz'].forEach(id => {
+  ['sortViz','graphCanvas','dpViz','treeViz','nqueensViz'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
 }
@@ -1235,7 +1141,6 @@ async function runSortViz(algo) {
   const labels = {
     quicksort: 'Quick Sort',
     mergesort: 'Merge Sort',
-    heapsort: 'Heap Sort',
   };
   log(`Starting ${labels[algo]} on ${n} elements`, 'highlight');
   if (customArr) log(`Using custom input: [${customArr.join(', ')}]`);
@@ -1571,68 +1476,6 @@ async function runGraphViz(algo) {
 // ============================================================
 // FLOYD-WARSHALL VISUALIZER
 // ============================================================
-async function runFloydViz() {
-  const dpDiv = document.getElementById('dpViz');
-  dpDiv.classList.remove('hidden');
-  const wrap = document.getElementById('dpTableWrap');
-
-  const custom = getCustomFloydMatrix();
-  const INF = 999;
-  const labels = custom?.labels || ['A','B','C','D'];
-  // Initial distance matrix
-  let dist = custom?.dist || [
-    [0,  3,  INF, 7],
-    [8,  0,  2,   INF],
-    [5,  INF,0,   1],
-    [2,  INF,INF, 0],
-  ];
-  const n = dist.length;
-
-  function renderTable(highlight=null) {
-    let html = '<table><tr><th></th>';
-    labels.forEach(l => html += `<th>${l}</th>`);
-    html += '</tr>';
-    dist.forEach((row, i) => {
-      html += `<tr><th>${labels[i]}</th>`;
-      row.forEach((v, j) => {
-        let cls = '';
-        if (highlight && highlight[0] === i && highlight[1] === j) cls = 'dp-active';
-        else if (v < INF && v !== 0) cls = 'dp-filled';
-        html += `<td class="${cls}">${v===INF?'∞':v}</td>`;
-      });
-      html += '</tr>';
-    });
-    html += '</table>';
-    wrap.innerHTML = html;
-  }
-
-  renderTable();
-  log(`Floyd-Warshall: All-Pairs Shortest Paths (${n}×${n})`, 'highlight');
-  if (custom) log(`Using custom matrix input: ${labels.join(', ')}`);
-  const spd = () => Math.max(100, 500 / State.vizSpeed);
-
-  for (let k = 0; k < n; k++) {
-    log(`Using intermediate node ${labels[k]}`, 'highlight');
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (dist[i][k] + dist[k][j] < dist[i][j]) {
-          dist[i][j] = dist[i][k] + dist[k][j];
-          renderTable([i, j]);
-          log(`  dist[${labels[i]}][${labels[j]}] updated to ${dist[i][j]} via ${labels[k]}`);
-          await delay(spd());
-        }
-        renderTable([i, j]);
-        await delay(spd() / 4);
-      }
-    }
-  }
-  renderTable();
-  log('✓ Floyd-Warshall complete!', 'success');
-}
-
-// ============================================================
-// KNAPSACK VISUALIZER
-// ============================================================
 async function runKnapsackViz(algo) {
   const dpDiv = document.getElementById('dpViz');
   dpDiv.classList.remove('hidden');
@@ -1816,105 +1659,6 @@ async function runBinarySearchViz() {
   });
 }
 
-// ============================================================
-// STRING MATCHING VISUALIZER
-// ============================================================
-async function runStringMatchViz(algo) {
-  const div = document.getElementById('rkViz');
-  div.classList.remove('hidden');
-  const displayEl = document.getElementById('rkDisplay');
-  const custom = getCustomStringMatchInput();
-  const text = custom?.text || 'ABCACABCAB';
-  const pattern = custom?.pattern || 'CAB';
-  const spd = () => Math.max(150, 600 / State.vizSpeed);
-  const matches = [];
-
-  if (algo === 'rabinkarp') {
-    const BASE = 31, MOD = 1e9 + 7;
-    log(`Rabin-Karp: text="${text}", pattern="${pattern}"`, 'highlight');
-
-    let phash = 0;
-    for (let c of pattern) phash = (phash * BASE + c.charCodeAt(0)) % MOD;
-
-    let whash = 0, power = 1;
-    for (let i = 0; i < pattern.length; i++) {
-      if (i > 0) power = (power * BASE) % MOD;
-      whash = (whash * BASE + text.charCodeAt(i)) % MOD;
-    }
-
-    for (let i = 0; i <= text.length - pattern.length; i++) {
-      displayEl.innerHTML = `
-        <span class="rk-label">TEXT</span>
-        <div>${text.split('').map((c, j) => {
-          let cls = '';
-          if (j >= i && j < i + pattern.length) cls = 'window';
-          if (matches.some(m => j >= m && j < m + pattern.length)) cls = 'match';
-          return `<span class="rk-char ${cls}">${c}</span>`;
-        }).join('')}</div>
-        <span class="rk-label" style="margin-top:1rem">PATTERN</span>
-        <div>${' '.repeat(i * 2)}${pattern.split('').map(c => `<span class="rk-char">${c}</span>`).join('')}</div>
-        <div style="margin-top:1rem;font-size:0.7rem;color:var(--text-secondary)">Window hash: ${whash.toFixed(0)} | ${whash === phash ? '<span style="color:var(--success)">Hash Match!</span>' : 'No match'}</div>
-      `;
-      log(`i=${i}: window hash=${whash.toFixed(0)} vs pattern hash=${phash.toFixed(0)}`);
-      await delay(spd());
-      if (whash === phash && text.substring(i, i + pattern.length) === pattern) {
-        matches.push(i);
-        log(`✓ Pattern found at index ${i}!`, 'success');
-      }
-      if (i < text.length - pattern.length) {
-        whash = (whash - text.charCodeAt(i) * power % MOD + MOD) % MOD;
-        whash = (whash * BASE + text.charCodeAt(i + pattern.length)) % MOD;
-      }
-    }
-  } else {
-    log(`KMP: text="${text}", pattern="${pattern}"`, 'highlight');
-    const lps = Array(pattern.length).fill(0);
-    for (let i = 1, len = 0; i < pattern.length;) {
-      if (pattern[i] === pattern[len]) lps[i++] = ++len;
-      else if (len) len = lps[len - 1];
-      else lps[i++] = 0;
-    }
-    let i = 0, j = 0;
-    while (i < text.length) {
-      displayEl.innerHTML = `
-        <span class="rk-label">TEXT</span>
-        <div>${text.split('').map((c, idx) => `<span class="rk-char ${idx === i ? 'window' : matches.some(m => idx >= m && idx < m + pattern.length) ? 'match' : ''}">${c}</span>`).join('')}</div>
-        <span class="rk-label" style="margin-top:1rem">PATTERN / LPS</span>
-        <div>${pattern.split('').map((c, idx) => `<span class="rk-char ${idx === j ? 'window' : ''}">${c}</span>`).join('')}</div>
-        <div style="margin-top:1rem;font-size:0.7rem;color:var(--text-secondary)">LPS: [${lps.join(', ')}]</div>
-      `;
-      log(`Compare text[${i}] and pattern[${j}]`);
-      await delay(spd());
-      if (text[i] === pattern[j]) {
-        i++;
-        j++;
-        if (j === pattern.length) {
-          matches.push(i - j);
-          log(`✓ KMP match found at index ${i - j}`, 'success');
-          j = lps[j - 1];
-        }
-      } else if (j) {
-        j = lps[j - 1];
-      } else {
-        i++;
-      }
-    }
-  }
-  log(`✓ ${algo === 'rabinkarp' ? 'Rabin-Karp' : 'KMP'} done! Matches: ${matches.join(', ') || 'none'}`, 'success');
-
-  addToHistory({
-    category: 'string',
-    algo: algo === 'rabinkarp' ? 'Rabin-Karp' : 'KMP Algorithm',
-    input: getCustomInputRaw() || `"${text}" vs "${pattern}"`,
-    result: `${matches.length} matches`,
-    steps: stepCounter,
-    time: Date.now(),
-  });
-}
-
-// ============================================================
-// HUFFMAN CODING VISUALIZER
-// ============================================================
 async function runHuffmanViz() {
   const dpDiv = document.getElementById('dpViz');
   dpDiv.classList.remove('hidden');
@@ -2259,7 +2003,7 @@ function initCompare() {
 
 let lastComparisonData = null;
 
-const COMPARISON_HELP = {
+  const COMPARISON_HELP = {
   sorting: {
     guide: 'Sorting compares speed, number of steps, and whether an algorithm stays reliable on different input shapes.',
     help: 'Quick Sort is often fast on average, while Merge Sort is the safer pick when you want predictable performance.',
@@ -2270,7 +2014,7 @@ const COMPARISON_HELP = {
   },
   shortestpath: {
     guide: 'Shortest path compares problem fit more than raw speed, because each algorithm solves a different graph variant.',
-    help: 'BFS is for unweighted graphs, Dijkstra is for non-negative weights, and Floyd-Warshall is for all-pairs distances.',
+    help: 'BFS is for unweighted graphs, while Dijkstra is the standard choice for non-negative weighted graphs.',
   },
   failure: {
     guide: 'Failure cases show where a tempting shortcut breaks down under the wrong input shape.',
@@ -2430,14 +2174,12 @@ function compareKnapsack(n) {
 
 function compareShortestPath(n) {
   const vCount = Math.min(n, 10);
-  const dpSteps = vCount * vCount * vCount; // Floyd O(V³)
   const dijSteps = (vCount + vCount*2) * Math.ceil(Math.log2(vCount));
   const bfsSteps = vCount + vCount * 2;
 
   return [
     {name:'BFS (Unweighted)',paradigm:'Graph Traversal',time:(bfsSteps*0.001).toFixed(3),steps:bfsSteps,optimal:true,space:'O(V+E)',note:'Best for unweighted shortest path'},
     {name:"Dijkstra's",paradigm:'Greedy',time:(dijSteps*0.001).toFixed(3),steps:dijSteps,optimal:true,space:'O(V²)',note:'Best for non-negative weighted shortest path'},
-    {name:'Floyd-Warshall',paradigm:'Dynamic Programming',time:(dpSteps*0.001).toFixed(3),steps:dpSteps,optimal:true,space:`O(V²)=${vCount*vCount}`,note:'Best for all-pairs shortest paths'},
   ];
 }
 
@@ -2594,13 +2336,6 @@ const SUGGESTION_DB = [
     ]
   },
   {
-    keywords: ['all','pairs','every','each','between','all-pairs'],
-    suggestions: [
-      {name:'Floyd-Warshall',paradigm:'Dynamic Programming',score:95,complexity:'O(V³)',reason:'Computes shortest paths between ALL pairs of nodes in a single DP pass. Best for dense graphs or when you need all-pairs info upfront.'},
-      {name:"Johnson's Algorithm",paradigm:'Reweighting + Dijkstra',score:80,complexity:'O(V² log V + VE)',reason:'Better than Floyd-Warshall for sparse graphs. Uses Bellman-Ford once to reweight, then runs Dijkstra from every vertex.'},
-    ]
-  },
-  {
     keywords: ['knapsack','bag','pack','maximize','value','weight','capacity','budget'],
     suggestions: [
       {name:'0/1 Knapsack DP',paradigm:'Dynamic Programming',score:98,complexity:'O(nW)',reason:'Guaranteed optimal for discrete (0/1) knapsack. Builds a DP table avoiding recomputation. Gold standard — Greedy WILL fail here for non-trivial inputs.'},
@@ -2613,7 +2348,6 @@ const SUGGESTION_DB = [
     suggestions: [
       {name:'Merge Sort',paradigm:'Divide & Conquer',score:92,complexity:'O(n log n)',reason:'Stable sort, guaranteed O(n log n) in all cases. Preferred for linked lists, external sorting, or when stability matters.'},
       {name:'Quick Sort',paradigm:'Divide & Conquer',score:90,complexity:'O(n log n) avg',reason:"Fastest in practice due to cache efficiency. O(n²) worst case on sorted data with bad pivot — use random pivot or Introsort (C++ STL's approach)."},
-      {name:'Heap Sort',paradigm:'Selection / Heap',score:82,complexity:'O(n log n)',reason:'In-place O(n log n) sort. Good when memory is limited. Not cache-friendly — slower than Quick Sort in practice despite same asymptotic complexity.'},
     ]
   },
   {
@@ -2622,14 +2356,6 @@ const SUGGESTION_DB = [
       {name:'Binary Search',paradigm:'Divide & Conquer',score:96,complexity:'O(log n)',reason:'Best when the data is already sorted and you need exact lookup. Each comparison removes half the search space.'},
       {name:'AVL Tree',paradigm:'Balanced BST',score:82,complexity:'O(log n)',reason:'Good when you need many searches and updates while keeping keys ordered. AVL trees provide strict logarithmic lookup.'},
       {name:'Red-Black Tree',paradigm:'Balanced BST',score:80,complexity:'O(log n)',reason:'A more update-friendly balanced tree than AVL. Used in many standard map/set implementations.'},
-    ]
-  },
-  {
-    keywords: ['pattern','match','search','find','text','string','substring','occurrence'],
-    suggestions: [
-      {name:'Rabin-Karp',paradigm:'Hashing',score:90,complexity:'O(n+m) avg',reason:'Uses rolling hash for O(n+m) average case. Ideal for multiple pattern search or plagiarism detection. Hash collisions cause O(nm) worst case.'},
-      {name:'KMP Algorithm',paradigm:'Failure Function',score:87,complexity:'O(n+m)',reason:'Guaranteed O(n+m) using the failure function — never rematches characters. Best when worst-case guarantee is required.'},
-      {name:'Boyer-Moore',paradigm:'Heuristic Skipping',score:85,complexity:'O(n/m) best',reason:'Fastest in practice for large alphabets. Skips portions of text using bad character and good suffix heuristics.'},
     ]
   },
   {
@@ -2673,14 +2399,10 @@ function algoKeyFromSuggestionName(name) {
   const map = {
     quicksort: 'quicksort',
     mergesort: 'mergesort',
-    heapsort: 'heapsort',
     dijkstrasalgorithm: 'dijkstra',
     bellmanford: 'bellmanford',
-    floydwarshall: 'floyd',
     bfsbreadthfirstsearch: 'bfs',
     binarysearch: 'binarysearch',
-    rabinkarp: 'rabinkarp',
-    kmpalgorithm: 'kmp',
     huffmancoding: 'huffman',
     avltree: 'avl',
     redblacktree: 'redblack',
@@ -2847,9 +2569,9 @@ function rerunHistory(id) {
       'Quick Sort':'quicksort','Merge Sort':'mergesort','BFS':'bfs',
       "Dijkstra's":'dijkstra','0/1 Knapsack DP':'knapsack_dp',
       'Greedy Knapsack':'knapsack_greedy','N-Queens Backtracking':'nqueens',
-      'Heap Sort':'heapsort','Bellman-Ford':'bellmanford',"Prim's MST":'prim',
-      "Kruskal's MST":'kruskal','Binary Search':'binarysearch','Rabin-Karp':'rabinkarp',
-      'KMP Algorithm':'kmp','Huffman Coding':'huffman','AVL Tree':'avl','Red-Black Tree':'redblack',
+      'Bellman-Ford':'bellmanford',"Prim's MST":'prim',
+      "Kruskal's MST":'kruskal','Binary Search':'binarysearch','Huffman Coding':'huffman',
+      'AVL Tree':'avl','Red-Black Tree':'redblack',
     };
     const algoKey = algoMap[item.algo];
     if(algoKey) {

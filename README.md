@@ -40,23 +40,20 @@ algo-lab/
 ### 1. Multi-Algorithm Problem Solver
 - Sorting: Quick Sort, Merge Sort
 - Knapsack: Greedy, DP, Backtracking (simulated)
-- Shortest Path: BFS, Dijkstra, Floyd-Warshall
-- String Matching: Rabin-Karp
+- Shortest Path: BFS, Dijkstra, Bellman-Ford
 - N-Queens: Backtracking
 - TSP: Branch & Bound
 
 ### 2. Comparison Dashboard
 - Side-by-side result cards (winner/loser highlighted)
 - Bar chart: Time comparison
-- Bar chart: Step count comparison  
-- Line chart: Input size vs time (growth curves)
+- Bar chart: Step count comparison
 
 ### 3. Step-by-Step Animated Visualizer
 - Sorting: animated bar chart with color states
 - Graph: animated BFS/Dijkstra on canvas
 - DP: animated table filling
 - N-Queens: animated board with backtracking
-- Rabin-Karp: animated sliding window
 - Speed control slider (1x–10x)
 - Pause/Resume/Step controls
 
@@ -243,12 +240,12 @@ Get algorithm suggestions from a problem description.
 | Merge Sort | D&C | O(n log n) | O(n) | ✅ Bars |
 | BFS | Graph | O(V+E) | O(V) | ✅ Canvas |
 | Dijkstra | Greedy | O((V+E)logV) | O(V) | ✅ Canvas |
-| Floyd-Warshall | DP | O(V³) | O(V²) | ✅ Table |
+| Bellman-Ford | DP | O(VE) | O(V) | ✅ Canvas |
 | 0/1 Knapsack | DP | O(nW) | O(nW) | ✅ Table |
 | Greedy Knapsack | Greedy | O(n log n) | O(1) | ✅ Table |
 | N-Queens | Backtracking | O(n!) | O(n) | ✅ Board |
 | TSP | Branch & Bound | O(n²·2ⁿ) | O(n²) | ✅ Canvas |
-| Rabin-Karp | Hashing | O(n+m) | O(1) | ✅ Text |
+| Huffman Coding | Greedy | O(n log n) | O(n) | ✅ Table |
 
 ---
 

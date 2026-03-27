@@ -20,13 +20,6 @@ const ALGO_DB = [
     ]
   },
   {
-    keywords: ['all','pairs','every','between','all-pairs','all pairs'],
-    results: [
-      { name:'Floyd-Warshall', paradigm:'Dynamic Programming', complexity:'O(V³)', score:95,
-        reason:'Computes all-pairs shortest paths. Simple O(V³) DP. Best for dense graphs.' },
-    ]
-  },
-  {
     keywords: ['knapsack','bag','pack','maximize','value','weight','capacity','item','budget','selection'],
     results: [
       { name:'0/1 Knapsack (DP)', paradigm:'Dynamic Programming', complexity:'O(nW)', score:98,
@@ -44,19 +37,6 @@ const ALGO_DB = [
         reason:'Stable, guaranteed O(n log n), ideal for linked lists and external sort.' },
       { name:'Quick Sort', paradigm:'Divide & Conquer', complexity:'O(n log n) avg', score:90,
         reason:'Fastest in practice. O(n²) worst case — mitigate with random pivot.' },
-      { name:'Heap Sort', paradigm:'Heap', complexity:'O(n log n)', score:82,
-        reason:'In-place O(n log n), no extra memory. Poor cache behavior.' },
-    ]
-  },
-  {
-    keywords: ['pattern','match','text','string','find','search','substring','occurrence'],
-    results: [
-      { name:'Rabin-Karp', paradigm:'Rolling Hash', complexity:'O(n+m) avg', score:90,
-        reason:'Efficient multi-pattern search using rolling hash.' },
-      { name:'KMP', paradigm:'Failure Function', complexity:'O(n+m)', score:87,
-        reason:'Guaranteed O(n+m) with no backtracking on text.' },
-      { name:'Boyer-Moore', paradigm:'Heuristic Skip', complexity:'O(n/m) best', score:85,
-        reason:'Fastest in practice for large alphabets.' },
     ]
   },
   {

@@ -53,7 +53,7 @@
         <span class="title-line">Compare</span>
         <span class="title-line accent">Strategies.</span>
       </h1>
-      <p class="hero-sub">Visualize, compare, and understand 19+ algorithms across sorting, graphs, strings, trees, compression, and optimization with animated step-by-step breakdowns and real complexity analysis.</p>
+      <p class="hero-sub">Visualize, compare, and understand 15+ algorithms across sorting, graphs, trees, compression, and optimization with animated step-by-step breakdowns and real complexity analysis.</p>
       <div class="hero-cta">
         <button class="btn-primary" onclick="navigateTo('visualize')">Start Visualizing →</button>
         <button class="btn-ghost" onclick="navigateTo('compare')">Compare Algorithms</button>
@@ -64,7 +64,7 @@
         <span class="hero-chip">Personal profile dashboard</span>
       </div>
       <div class="hero-stats">
-        <div class="stat"><span class="stat-num">19+</span><span class="stat-label">Algorithms</span></div>
+        <div class="stat"><span class="stat-num">15+</span><span class="stat-label">Algorithms</span></div>
         <div class="stat"><span class="stat-num">10+</span><span class="stat-label">Techniques</span></div>
         <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Insight</span></div>
       </div>
@@ -125,7 +125,7 @@
     <div class="section-header">
       <div class="section-tag">// PARADIGMS</div>
       <h2>Every Strategy, Explained</h2>
-      <p>Core paradigms plus trees, string matching, and compression tools with real-world problems and animated visualizations.</p>
+      <p>Core paradigms plus trees and compression tools with real-world problems and animated visualizations.</p>
     </div>
     <div class="paradigm-grid">
       <div class="paradigm-card" onclick="navigateTo('visualize','greedy')">
@@ -139,7 +139,7 @@
         <div class="para-glyph">D</div>
         <h3>Dynamic Programming</h3>
         <p>Optimal substructure + overlapping subproblems. Guaranteed optimal solutions.</p>
-        <div class="para-algos">0/1 Knapsack · LCS · Floyd-Warshall</div>
+        <div class="para-algos">0/1 Knapsack · LCS · Bellman-Ford</div>
         <div class="para-arrow">→</div>
       </div>
       <div class="paradigm-card" onclick="navigateTo('visualize','dc')">
@@ -167,7 +167,7 @@
         <div class="para-glyph">⬡</div>
         <h3>Graph Algorithms</h3>
         <p>Traverse, search, find paths. The backbone of network algorithms.</p>
-        <div class="para-algos">BFS · DFS · Dijkstra · Floyd-Warshall</div>
+        <div class="para-algos">BFS · DFS · Dijkstra · Bellman-Ford</div>
         <div class="para-arrow">→</div>
       </div>
     </div>
@@ -227,13 +227,11 @@
           <optgroup label="Sorting">
             <option value="quicksort">Quick Sort</option>
             <option value="mergesort">Merge Sort</option>
-            <option value="heapsort">Heap Sort</option>
           </optgroup>
           <optgroup label="Graph">
             <option value="bfs">BFS Traversal</option>
             <option value="dijkstra">Dijkstra's SSSP</option>
             <option value="bellmanford">Bellman-Ford</option>
-            <option value="floyd">Floyd-Warshall</option>
             <option value="prim">Prim's MST</option>
             <option value="kruskal">Kruskal's MST</option>
           </optgroup>
@@ -245,8 +243,6 @@
             <option value="binarysearch">Binary Search</option>
             <option value="nqueens">N-Queens</option>
             <option value="tsp">TSP (Branch & Bound)</option>
-            <option value="rabinkarp">Rabin-Karp</option>
-            <option value="kmp">KMP Pattern Matching</option>
             <option value="huffman">Huffman Coding</option>
             <option value="avl">AVL Tree</option>
             <option value="redblack">Red-Black Tree</option>
@@ -320,10 +316,6 @@
         <!-- NQueens viz -->
         <div id="nqueensViz" class="nqueens-viz hidden">
           <div id="queensBoard"></div>
-        </div>
-        <!-- Rabin Karp viz -->
-        <div id="rkViz" class="rk-viz hidden">
-          <div id="rkDisplay"></div>
         </div>
         <!-- Default placeholder -->
         <div id="vizPlaceholder" class="viz-placeholder">
